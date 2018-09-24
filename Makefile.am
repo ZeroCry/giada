@@ -15,6 +15,7 @@ sourcesCore =                            \
 	src/core/const.h                       \
 	src/core/types.h                       \
 	src/core/range.h                       \
+	src/core/action.h                      \
 	src/core/channel.h                     \
 	src/core/channel.cpp                   \
 	src/core/sampleChannel.h               \
@@ -53,6 +54,8 @@ sourcesCore =                            \
 	src/core/patch.cpp                     \
 	src/core/recorder.h                    \
 	src/core/recorder.cpp                  \
+	src/core/recorder/recorder.h           \
+	src/core/recorder/recorder.cpp         \
 	src/core/mixer.h                       \
 	src/core/mixer.cpp                     \
 	src/core/storager.h	                   \

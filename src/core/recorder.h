@@ -25,8 +25,8 @@
  * -------------------------------------------------------------------------- */
 
 
-#ifndef G_RECORDER_H
-#define G_RECORDER_H
+#ifndef G_RECORDER_DEPRECATED_H
+#define G_RECORDER_DEPRECATED_H
 
 
 #include <cstdint>
