@@ -176,7 +176,7 @@ void MidiChannel::empty()
 /* -------------------------------------------------------------------------- */
 
 
-void MidiChannel::sendMidi(recorder::action* a, int localFrame)
+void MidiChannel::sendMidi(recorder_DEPR_::action* a, int localFrame)
 {
 	if (isPlaying() && !mute) {
 		if (midiOut)
@@ -229,8 +229,8 @@ void MidiChannel::receiveMidi(const MidiEvent& midiEvent)
 
 #endif
 
-	if (recorder::canRec(this, clock::isRunning(), mixer::recording)) {
-		recorder::rec(index, G_ACTION_MIDI, clock::getCurrentFrame(), midiEventFlat.getRaw());
+	if (recorder_DEPR_::canRec(this, clock::isRunning(), mixer::recording)) {
+		recorder_DEPR_::rec(index, G_ACTION_MIDI, clock::getCurrentFrame(), midiEventFlat.getRaw());
 		hasActions = true;
 	}
 }

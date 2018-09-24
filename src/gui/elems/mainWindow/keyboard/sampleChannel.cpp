@@ -297,7 +297,7 @@ void geSampleChannel::cb_openMenu()
 	/* If you're recording (input or actions) no menu is allowed; you can't do
 	anything, especially deallocate the channel */
 
-	if (m::mixer::recording || m::recorder::active)
+	if (m::mixer::recording || m::recorder_DEPR_::active)
 		return;
 
 	Fl_Menu_Item rclick_menu[] = {
@@ -385,8 +385,8 @@ void geSampleChannel::refresh()
 	if (static_cast<SampleChannel*>(ch)->wave != nullptr) {
 		if (m::mixer::recording && ch->armed)
 			mainButton->setInputRecordMode();
-		if (m::recorder::active) {
-			if (m::recorder::canRec(ch, m::clock::isRunning(), m::mixer::recording))
+		if (m::recorder_DEPR_::active) {
+			if (m::recorder_DEPR_::canRec(ch, m::clock::isRunning(), m::mixer::recording))
 				mainButton->setActionRecordMode();
 		}
 		status->redraw(); // status invisible? sampleButton too (see below)

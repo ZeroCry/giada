@@ -35,8 +35,8 @@
 namespace giada {
 namespace v
 {
-gePianoItem::gePianoItem(Pixel X, Pixel Y, Pixel W, Pixel H, m::recorder::action a1,
-	m::recorder::action a2)
+gePianoItem::gePianoItem(Pixel X, Pixel Y, Pixel W, Pixel H, m::recorder_DEPR_::action a1,
+	m::recorder_DEPR_::action a2)
 : geBaseAction(X, Y, W, H, /*resizable=*/true, a1, a2),
   orphaned    (a2.frame == -1)
 {

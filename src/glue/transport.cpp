@@ -81,8 +81,8 @@ void glue_stopSeq(bool gui)
 	/* what to do if we stop the sequencer and some action recs are active?
 	 * Deactivate the button and delete any 'rec on' status */
 
-	if (recorder::active) {
-		recorder::active = false;
+	if (recorder_DEPR_::active) {
+		recorder_DEPR_::active = false;
     Fl::lock();
 	  G_MainWin->mainTransport->updateRecAction(0);
 	  Fl::unlock();

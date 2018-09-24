@@ -71,7 +71,7 @@ void geChannelStatus::draw()
   if (mixer::recording && ch->armed)
     fl_rectf(x()+1, y()+1, w()-2, h()-2, G_COLOR_RED);     // take in progress
   else
-  if (recorder::active && recorder::canRec(ch, clock::isRunning(), mixer::recording))
+  if (recorder_DEPR_::active && recorder_DEPR_::canRec(ch, clock::isRunning(), mixer::recording))
     fl_rectf(x()+1, y()+1, w()-2, h()-2, G_COLOR_BLUE);     // action record
 
   /* equation for the progress bar:

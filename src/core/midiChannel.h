@@ -64,7 +64,7 @@ public:
 	/* sendMidi
 	 * send Midi event to the outside world. */
 
-	void sendMidi(giada::m::recorder::action* a, int localFrame);
+	void sendMidi(giada::m::recorder_DEPR_::action* a, int localFrame);
 	void sendMidi(uint32_t data);
 
 #ifdef WITH_VST

@@ -28,7 +28,7 @@ void onFirstBeat_(MidiChannel* ch)
 /* -------------------------------------------------------------------------- */
 
 
-void parseAction_(MidiChannel* ch, const recorder::action* a, int localFrame)
+void parseAction_(MidiChannel* ch, const recorder_DEPR_::action* a, int localFrame)
 {
 	if (ch->isPlaying() && !ch->mute) {
 		if (ch->midiOut)
@@ -51,7 +51,7 @@ void parseEvents(MidiChannel* ch, mixer::FrameEvents fe)
 {
 	if (fe.onFirstBeat)
 		onFirstBeat_(ch);
-	for (const recorder::action* action : fe.actions)
+	for (const recorder_DEPR_::action* action : fe.actions)
 		if (action->chan == ch->index && action->type == G_ACTION_MIDI)
 			parseAction_(ch, action, fe.frameLocal);
 }

@@ -124,11 +124,11 @@ void Channel::copy(const Channel* src, pthread_mutex_t* pluginMutex)
 
 	/* clone actions */
 
-	for (unsigned i=0; i<recorder::global.size(); i++) {
-		for (unsigned k=0; k<recorder::global.at(i).size(); k++) {
-			recorder::action* a = recorder::global.at(i).at(k);
+	for (unsigned i=0; i<recorder_DEPR_::global.size(); i++) {
+		for (unsigned k=0; k<recorder_DEPR_::global.at(i).size(); k++) {
+			recorder_DEPR_::action* a = recorder_DEPR_::global.at(i).at(k);
 			if (a->chan == src->index) {
-				recorder::rec(index, a->type, a->frame, a->iValue, a->fValue);
+				recorder_DEPR_::rec(index, a->type, a->frame, a->iValue, a->fValue);
 				hasActions = true;
 			}
 		}

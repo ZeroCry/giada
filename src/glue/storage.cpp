@@ -299,7 +299,7 @@ void glue_loadPatch(void* data)
 	/* Let recorder recompute the actions' positions if the current 
 	samplerate != patch samplerate. */
 
-	recorder::updateSamplerate(conf::samplerate, patch::samplerate);
+	recorder_DEPR_::updateSamplerate(conf::samplerate, patch::samplerate);
 
 	/* Save patchPath by taking the last dir of the broswer, in order to reuse it 
 	the next time. */

@@ -47,8 +47,8 @@ private:
 
 public:
 
-	gePianoItem(int x, int y, int w, int h, m::recorder::action a1, 
-		m::recorder::action a2);
+	gePianoItem(int x, int y, int w, int h, m::recorder_DEPR_::action a1,
+		m::recorder_DEPR_::action a2);
  
 	void draw() override;
 

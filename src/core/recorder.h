@@ -40,7 +40,7 @@ class Channel;
 
 namespace giada {
 namespace m {
-namespace recorder
+namespace recorder_DEPR_
 {
 /* action
  * struct containing fields to describe an atomic action. Note from

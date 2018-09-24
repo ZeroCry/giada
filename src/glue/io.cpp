@@ -92,7 +92,7 @@ void keyRelease(Channel* ch, bool ctrl, bool shift)
 
 void startStopActionRec(bool gui)
 {
-	m::recorder::active ? stopActionRec(gui) : startActionRec(gui);
+	m::recorder_DEPR_::active ? stopActionRec(gui) : startActionRec(gui);
 }
 
 
@@ -106,7 +106,7 @@ void startActionRec(bool gui)
 	if (kernelAudio::getStatus() == false)
 		return;
 
-	recorder::active = true;
+	recorder_DEPR_::active = true;
 
 	if (!clock::isRunning())
 		glue_startSeq(false);  // update gui
@@ -126,8 +126,8 @@ void stopActionRec(bool gui)
 {
 	/* Stop the recorder and sort newly recorder actions. */
 
-	m::recorder::active = false;
-	m::recorder::sortActions();
+	m::recorder_DEPR_::active = false;
+	m::recorder_DEPR_::sortActions();
 
 	for (Channel* ch : m::mixer::channels)
 	{

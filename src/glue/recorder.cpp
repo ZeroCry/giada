@@ -54,7 +54,7 @@ namespace
 {
 void updateChannel(geChannel* gch, bool refreshActionEditor=true)
 {
-	gch->ch->hasActions = m::recorder::hasActions(gch->ch->index);
+	gch->ch->hasActions = m::recorder_DEPR_::hasActions(gch->ch->index);
 	if (gch->ch->type == ChannelType::SAMPLE) {
 		geSampleChannel* gsch = static_cast<geSampleChannel*>(gch);
 		gsch->ch->hasActions ? gsch->showActionButton() : gsch->hideActionButton();
@@ -74,7 +74,7 @@ void clearAllActions(geChannel* gch)
 {
 	if (!gdConfirmWin("Warning", "Clear all actions: are you sure?"))
 		return;
-	m::recorder::clearChan(gch->ch->index);
+	m::recorder_DEPR_::clearChan(gch->ch->index);
 	updateChannel(gch);
 }
 
@@ -86,7 +86,7 @@ void clearVolumeActions(geChannel* gch)
 {
 	if (!gdConfirmWin("Warning", "Clear all volume actions: are you sure?"))
 		return;
-	m::recorder::clearAction(gch->ch->index, G_ACTION_VOLUME);
+	m::recorder_DEPR_::clearAction(gch->ch->index, G_ACTION_VOLUME);
 	updateChannel(gch);
 }
 
@@ -98,7 +98,7 @@ void clearStartStopActions(geChannel* gch)
 {
 	if (!gdConfirmWin("Warning", "Clear all start/stop actions: are you sure?"))
 		return;
-	m::recorder::clearAction(gch->ch->index, G_ACTION_KEYPRESS | G_ACTION_KEYREL | G_ACTION_KILL);
+	m::recorder_DEPR_::clearAction(gch->ch->index, G_ACTION_KEYPRESS | G_ACTION_KEYREL | G_ACTION_KILL);
 	updateChannel(gch);
 }
 
@@ -108,7 +108,7 @@ void clearStartStopActions(geChannel* gch)
 
 bool midiActionCanFit(int chan, int note, int frame_a, int frame_b)
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder_DEPR_;
 
 	/* TODO - This is insane, to say the least. Let's wait for recorder refactoring... */
 
@@ -122,7 +122,7 @@ bool midiActionCanFit(int chan, int note, int frame_a, int frame_b)
 
 bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b)
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder_DEPR_;
 
 	/* TODO - Even more insanity... Let's wait for recorder refactoring... */
 
@@ -156,17 +156,17 @@ void recordMidiAction(int chan, int note, int velocity, int frame_a, int frame_b
 	m::MidiEvent event_a = m::MidiEvent(m::MidiEvent::NOTE_ON,  note, velocity);
 	m::MidiEvent event_b = m::MidiEvent(m::MidiEvent::NOTE_OFF, note, velocity);
 
-	m::recorder::rec(chan, G_ACTION_MIDI, frame_a, event_a.getRaw());
-	m::recorder::rec(chan, G_ACTION_MIDI, frame_b, event_b.getRaw());		
+	m::recorder_DEPR_::rec(chan, G_ACTION_MIDI, frame_a, event_a.getRaw());
+	m::recorder_DEPR_::rec(chan, G_ACTION_MIDI, frame_b, event_b.getRaw());
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void deleteMidiAction(MidiChannel* ch, m::recorder::action a1, m::recorder::action a2)
+void deleteMidiAction(MidiChannel* ch, m::recorder_DEPR_::action a1, m::recorder_DEPR_::action a2)
 {
-	m::recorder::deleteAction(ch->index, a1.frame, G_ACTION_MIDI, true, 
+	m::recorder_DEPR_::deleteAction(ch->index, a1.frame, G_ACTION_MIDI, true,
 		&m::mixer::mutex, a1.iValue, 0.0);
 	
 	/* If action 1 is not orphaned, send a note-off first in case we are deleting 
@@ -175,11 +175,11 @@ void deleteMidiAction(MidiChannel* ch, m::recorder::action a1, m::recorder::acti
 	
 	if (a2.frame != -1) {
 		ch->sendMidi(a2.iValue);
-		m::recorder::deleteAction(ch->index, a2.frame, G_ACTION_MIDI, true, 
+		m::recorder_DEPR_::deleteAction(ch->index, a2.frame, G_ACTION_MIDI, true,
 			&m::mixer::mutex, a2.iValue, 0.0);
 	}
 
-	ch->hasActions = m::recorder::hasActions(ch->index);
+	ch->hasActions = m::recorder_DEPR_::hasActions(ch->index);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -188,11 +188,11 @@ void deleteMidiAction(MidiChannel* ch, m::recorder::action a1, m::recorder::acti
 void recordSampleAction(SampleChannel* ch, int type, int frame_a, int frame_b)
 {
 	if (ch->mode == ChannelMode::SINGLE_PRESS) {
-		m::recorder::rec(ch->index, G_ACTION_KEYPRESS, frame_a);
-		m::recorder::rec(ch->index, G_ACTION_KEYREL, frame_b == 0 ? frame_a + G_DEFAULT_ACTION_SIZE : frame_b);
+		m::recorder_DEPR_::rec(ch->index, G_ACTION_KEYPRESS, frame_a);
+		m::recorder_DEPR_::rec(ch->index, G_ACTION_KEYREL, frame_b == 0 ? frame_a + G_DEFAULT_ACTION_SIZE : frame_b);
 	}
 	else
-		m::recorder::rec(ch->index, type, frame_a);
+		m::recorder_DEPR_::rec(ch->index, type, frame_a);
 
 	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
@@ -203,7 +203,7 @@ void recordSampleAction(SampleChannel* ch, int type, int frame_a, int frame_b)
 
 void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue)
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder_DEPR_;
 
 	if (!mr::hasActions(ch->index, type)) {  // First action ever? Add actions at boundaries.
 		mr::rec(ch->index, type, 0, 0, 1.0);	
@@ -218,9 +218,9 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue)
 /* -------------------------------------------------------------------------- */
 
 
-void deleteEnvelopeAction(Channel* ch, m::recorder::action a, bool moved)
+void deleteEnvelopeAction(Channel* ch, m::recorder_DEPR_::action a, bool moved)
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder_DEPR_;
 
 	/* Deleting first or last action: clear everything. Otherwise delete the 
 	selected action only. */
@@ -237,10 +237,10 @@ void deleteEnvelopeAction(Channel* ch, m::recorder::action a, bool moved)
 /* -------------------------------------------------------------------------- */
 
 
-void deleteSampleAction(SampleChannel* ch, m::recorder::action a1, 
-	m::recorder::action a2)
+void deleteSampleAction(SampleChannel* ch, m::recorder_DEPR_::action a1,
+	m::recorder_DEPR_::action a2)
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder_DEPR_;
 
 	/* if SINGLE_PRESS delete both the keypress and the keyrelease pair. */
 
@@ -258,9 +258,9 @@ void deleteSampleAction(SampleChannel* ch, m::recorder::action a1,
 /* -------------------------------------------------------------------------- */
 
 
-vector<m::recorder::Composite> getSampleActions(const SampleChannel* ch)
+vector<m::recorder_DEPR_::Composite> getSampleActions(const SampleChannel* ch)
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder_DEPR_;
 
 	vector<mr::Composite> out;
 
@@ -287,7 +287,7 @@ vector<m::recorder::Composite> getSampleActions(const SampleChannel* ch)
 		fetch the corresponding G_ACTION_KEYREL. */
 
 		if (ch->mode == ChannelMode::SINGLE_PRESS && a1->type == G_ACTION_KEYPRESS) {
-			m::recorder::action* a2 = nullptr;
+			m::recorder_DEPR_::action* a2 = nullptr;
 			mr::getNextAction(ch->index, G_ACTION_KEYREL, a1->frame, &a2);
 			if (a2 != nullptr)
 				cmp.a2 = *a2;
@@ -303,9 +303,9 @@ vector<m::recorder::Composite> getSampleActions(const SampleChannel* ch)
 /* -------------------------------------------------------------------------- */
 
 
-vector<m::recorder::action> getEnvelopeActions(const Channel* ch, int type)
+vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type)
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder_DEPR_;
 
 	vector<mr::action> out;
 
@@ -332,7 +332,7 @@ vector<m::recorder::action> getEnvelopeActions(const Channel* ch, int type)
 /* -------------------------------------------------------------------------- */
 
 
-void setVelocity(const Channel* ch, m::recorder::action a, int value)
+void setVelocity(const Channel* ch, m::recorder_DEPR_::action a, int value)
 {
 	/* TODO - this is super ugly: delete the action and add a new one with the
 	modified values. This shit will go away as soon as we'll refactor m::recorder
@@ -341,30 +341,30 @@ void setVelocity(const Channel* ch, m::recorder::action a, int value)
 	m::MidiEvent event = m::MidiEvent(a.iValue);
 	event.setVelocity(value);
 
-	m::recorder::deleteAction(ch->index, a.frame, G_ACTION_MIDI, true, 
+	m::recorder_DEPR_::deleteAction(ch->index, a.frame, G_ACTION_MIDI, true,
 		&m::mixer::mutex, a.iValue, 0.0);
-	m::recorder::rec(ch->index, G_ACTION_MIDI, a.frame, event.getRaw());
+	m::recorder_DEPR_::rec(ch->index, G_ACTION_MIDI, a.frame, event.getRaw());
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-vector<m::recorder::Composite> getMidiActions(int chan)
+vector<m::recorder_DEPR_::Composite> getMidiActions(int chan)
 {
-	vector<m::recorder::Composite> out;
+	vector<m::recorder_DEPR_::Composite> out;
 
-	m::recorder::sortActions();
+	m::recorder_DEPR_::sortActions();
 
-	for (unsigned i=0; i<m::recorder::frames.size(); i++) {
+	for (unsigned i=0; i<m::recorder_DEPR_::frames.size(); i++) {
 
-		if (m::recorder::frames.at(i) > m::clock::getFramesInLoop())
+		if (m::recorder_DEPR_::frames.at(i) > m::clock::getFramesInLoop())
 			continue;
 
-		for (unsigned j=0; j<m::recorder::global.at(i).size(); j++) {
+		for (unsigned j=0; j<m::recorder_DEPR_::global.at(i).size(); j++) {
 
-			m::recorder::action* a1 = m::recorder::global.at(i).at(j);
-			m::recorder::action* a2 = nullptr;
+			m::recorder_DEPR_::action* a1 = m::recorder_DEPR_::global.at(i).at(j);
+			m::recorder_DEPR_::action* a2 = nullptr;
 
 			m::MidiEvent a1midi(a1->iValue);
 
@@ -380,7 +380,7 @@ vector<m::recorder::Composite> getMidiActions(int chan)
 			/* Prepare the composite action. Action 1 exists for sure, so fill it up
 			right away. */
 
-			m::recorder::Composite cmp; 
+			m::recorder_DEPR_::Composite cmp;
 			cmp.a1 = *a1;
 
 			/* Search for the next action. Must have: same channel, G_ACTION_MIDI,
@@ -388,7 +388,7 @@ vector<m::recorder::Composite> getMidiActions(int chan)
 			note of a1 and random velocity: we don't care about it (and so we mask it
 			with 0x0000FF00). */
 
-			m::recorder::getNextAction(chan, G_ACTION_MIDI, a1->frame, &a2, 
+			m::recorder_DEPR_::getNextAction(chan, G_ACTION_MIDI, a1->frame, &a2,
 				m::MidiEvent(m::MidiEvent::NOTE_OFF, a1midi.getNote(), 0x0).getRaw(), 
 				0x0000FF00);
 

@@ -35,7 +35,7 @@ namespace giada {
 namespace v
 {
 geSampleAction::geSampleAction(Pixel X, Pixel Y, Pixel W, Pixel H, 
-	const SampleChannel* ch, m::recorder::action a1, m::recorder::action a2)
+	const SampleChannel* ch, m::recorder_DEPR_::action a1, m::recorder_DEPR_::action a2)
 : geBaseAction(X, Y, W, H, ch->mode == ChannelMode::SINGLE_PRESS, a1, a2),
   m_ch        (ch)
 {

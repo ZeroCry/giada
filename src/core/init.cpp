@@ -85,7 +85,7 @@ void init_prepareKernelAudio()
   kernelAudio::openDevice();
   clock::init(conf::samplerate, conf::midiTCfps);
 	mixer::init(clock::getFramesInLoop(), kernelAudio::getRealBufSize());
-	recorder::init();
+	recorder_DEPR_::init();
 
 #ifdef WITH_VST
 
@@ -194,7 +194,7 @@ void init_shutdown()
 	else
 		gu_log("[init] configuration saved\n");
 
-	recorder::clearAll();
+	recorder_DEPR_::clearAll();
 	gu_log("[init] Recorder cleaned up\n");
 
 #ifdef WITH_VST

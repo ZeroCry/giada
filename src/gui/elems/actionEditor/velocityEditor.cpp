@@ -114,7 +114,7 @@ int geVelocityEditor::yToValue(Pixel px) const
 
 void geVelocityEditor::rebuild()
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder_DEPR_;
 	namespace cr = c::recorder;
 
 	/* Remove all existing actions and set a new width, according to the current

@@ -363,7 +363,7 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 			fe.onBar        = clock::isOnBar();
 			fe.onFirstBeat  = clock::isOnFirstBeat();
 			fe.quantoPassed = clock::quantoHasPassed();
-			fe.actions      = recorder::getActionsOnFrame(clock::getCurrentFrame());
+			fe.actions      = recorder_DEPR_::getActionsOnFrame(clock::getCurrentFrame());
 
 			for (Channel* channel : channels)
 				channel->parseEvents(fe);

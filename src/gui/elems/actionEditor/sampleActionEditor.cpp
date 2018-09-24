@@ -64,7 +64,7 @@ geSampleActionEditor::~geSampleActionEditor()
 
 void geSampleActionEditor::rebuild()
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder_DEPR_;
 	namespace cr = c::recorder;
 
 	const SampleChannel* ch = static_cast<const SampleChannel*>(m_ch);

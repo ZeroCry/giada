@@ -51,7 +51,7 @@ struct FrameEvents
 	bool  onBar;
 	bool  onFirstBeat;
 	bool  quantoPassed;
-	std::vector<recorder::action*> actions;
+	std::vector<recorder_DEPR_::action*> actions;
 };
 
 extern std::vector<Channel*> channels;

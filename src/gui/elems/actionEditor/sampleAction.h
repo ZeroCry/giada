@@ -48,7 +48,7 @@ private:
 public:
 
 	geSampleAction(Pixel x, Pixel y, Pixel w, Pixel h, const SampleChannel* ch,
-		m::recorder::action a1, m::recorder::action a2);
+		m::recorder_DEPR_::action a1, m::recorder_DEPR_::action a2);
 
 	void draw() override;
 };

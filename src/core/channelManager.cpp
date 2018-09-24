@@ -51,7 +51,7 @@ namespace
 {
 void writeActions_(int chanIndex, patch::channel_t& pch)
 {
-	recorder::forEachAction([&] (const recorder::action* a) {
+	recorder_DEPR_::forEachAction([&] (const recorder_DEPR_::action* a) {
 		if (a->chan != chanIndex) 
 			return;
 		pch.actions.push_back(patch::action_t { 
@@ -90,7 +90,7 @@ void writePlugins_(const Channel* ch, patch::channel_t& pch)
 void readActions_(Channel* ch, const patch::channel_t& pch)
 {
 	for (const patch::action_t& ac : pch.actions) {
-		recorder::rec(ch->index, ac.type, ac.frame, ac.iValue, ac.fValue);
+		recorder_DEPR_::rec(ch->index, ac.type, ac.frame, ac.iValue, ac.fValue);
 		ch->hasActions = true;
 	}
 }
