@@ -29,14 +29,49 @@
 #define G_RECORDER_H
 
 
+#include <functional>
+
+
+class Channel;
+
+
 namespace giada {
-namespace m {
+namespace m 
+{
+class Action;
+
 namespace recorder
 {
+/* init
+Initializes the recorder: everything starts from here. */
+
+void init();
+
 /* clearAll
 Deletes all recorded actions. */
 
 void clearAll();
+
+/* hasActions
+Checks if the channel has at least one action recorded. */
+
+bool hasActions(int channel);
+
+/* canRecord
+Can a channel record an action? Call this one BEFORE rec(). */
+
+bool canRecord(const Channel* ch);
+
+/* record
+ * Records an action. */
+
+void record(int channel, int frame, uint32_t value);
+
+/* forEachAction
+Applies a read-only callback on each action recorded. */
+
+void forEachAction(std::function<void(const Action&)> f);
+
 }}}; // giada::m::recorder::
 
 #endif

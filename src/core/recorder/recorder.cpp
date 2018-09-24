@@ -27,7 +27,9 @@
 
 #include <map>
 #include <vector>
+#include <algorithm>
 #include "../action.h"
+#include "../channel.h"
 #include "recorder.h"
 
 
@@ -52,9 +54,72 @@ namespace
 /* -------------------------------------------------------------------------- */
 
 
+void init()
+{
+	active = false;
+	sorted = false;
+	clearAll();	
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 void clearAll()
 {
 	actions.clear();
 }
 
+
+/* -------------------------------------------------------------------------- */
+
+
+bool hasActions(int channel)
+{
+	for (auto& kv : actions)
+		for (const Action& action : kv.second)
+			if (action.channel == channel)
+				return true;
+	return false;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+bool canRecord(const Channel* ch)
+{
+	/* Can record on a channel if the recorder is active and ((channel is MIDI) or 
+	(SAMPLE type with data in it)). */
+	return active && (ch->type == ChannelType::MIDI || (ch->type == ChannelType::SAMPLE && ch->hasData()));	
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void record(int channel, int frame, uint32_t value)
+{
+	Action action(channel, frame, value);
+
+	/* If key frame doesn't exist yet, create it brand new with an already filled
+	vector (with one action). std::initializer_list is currently the only way to 
+	push back a vector in a map. It hurts, I know. */
+
+	if (actions.count(frame) == 0)
+		actions.emplace(frame, std::initializer_list<Action>{ action });
+	else
+		actions[frame].push_back(action);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void forEachAction(std::function<void(const Action&)> f)
+{
+	for (auto& kv : actions)
+		for (const Action& action : kv.second)
+			f(action);
+}
 }}}; // giada::m::recorder::
