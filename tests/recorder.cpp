@@ -10,6 +10,7 @@ TEST_CASE("recorder")
 	using namespace giada::m;
 
 	recorder::init();
+	recorder::enable();
 
 	REQUIRE(recorder::hasActions(/*ch=*/0) == false);
 
@@ -18,7 +19,7 @@ TEST_CASE("recorder")
 		const int   ch = 0;
 		const Frame f  = 0;
 
-		recorder::record(ch, f, 0x000000);
+		recorder::rec(ch, f, 0x000000);
 
 		REQUIRE(recorder::hasActions(ch) == true);
 	}
@@ -28,10 +29,102 @@ TEST_CASE("recorder")
 		const int   ch = 0;
 		const Frame f  = 0;
 
-		recorder::record(ch, f, 0x000000);
-		recorder::record(ch, f, 0x000001);
+		recorder::rec(ch, f, 0x000000);
+		recorder::rec(ch, f, 0x000001);
 
-		REQUIRE(recorder::hasActions(/*ch=*/0) == true);
+		REQUIRE(recorder::hasActions(ch) == true);
+
+		SECTION("Test record, another action on a different frame and channel")
+		{
+			const int   ch = 1;
+			const Frame f  = 70;
+
+			recorder::rec(ch, f, 0x000002);
+
+			REQUIRE(recorder::hasActions(ch) == true);
+
+			SECTION("Test clear actions by channel")
+			{
+				recorder::clearChannel(0);
+				REQUIRE(recorder::hasActions(0) == false);
+			}
+		}
+	}
+
+	SECTION("Test retrieval")
+	{
+	}
+
+	SECTION("Test retrieval MIDI")
+	{
+	}
+
+	SECTION("Test deletion, single action")
+	{
+	}
+
+	SECTION("Test deletion, range of actions")
+	{
+	}
+
+	SECTION("Test action presence")
+	{
+	}
+
+	SECTION("Test clear actions by type")
+	{
+	}
+
+	SECTION("Test clear all")
+	{
+	}
+
+	SECTION("Test optimization")
+	{
+	}
+
+	SECTION("Test BPM update")
+	{
+	}
+
+	SECTION("Test samplerate update")
+	{
+	}
+
+	SECTION("Test expand")
+	{
+	}
+
+	SECTION("Test shrink")
+	{
+	}
+	
+	SECTION("Test overdub, full overwrite")
+	{
+	}
+
+	SECTION("Test overdub, left overlap")
+	{
+	}
+
+	SECTION("Test overdub, right overlap")
+	{
+	}
+
+	SECTION("Test overdub, hole diggin'")
+	{
+	}
+
+	SECTION("Test overdub, cover all")
+	{
+	}
+
+	SECTION("Test overdub, null loop")
+	{
+	}
+
+	SECTION("Test overdub, ring loop")
+	{
 	}
 }
 

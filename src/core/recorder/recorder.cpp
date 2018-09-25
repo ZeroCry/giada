@@ -43,9 +43,34 @@ namespace recorder
 {
 namespace
 {
-	map<Frame, vector<Action>> actions;
-	bool active = false;
-	bool sorted = false;
+map<Frame, vector<Action>> actions;
+bool active = false;
+
+
+/* -------------------------------------------------------------------------- */
+
+/* optimize
+Removes frames without actions. */
+
+void optimize_()
+{
+	for (auto it = actions.cbegin(); it != actions.cend();)
+	  it->second.size() == 0 ? it = actions.erase(it) : ++it;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void debug_()
+{
+	for (auto& kv : actions)
+	{
+		printf("frame: %d\n", kv.first);
+		for (const Action& action : kv.second)
+			printf(" channel=%d, value=0x%X\n", action.channel, action.event.getRaw());	
+	}
+}
 } // {anonymous}
 
 
@@ -57,7 +82,6 @@ namespace
 void init()
 {
 	active = false;
-	sorted = false;
 	clearAll();	
 }
 
@@ -68,6 +92,21 @@ void init()
 void clearAll()
 {
 	actions.clear();
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+
+void clearChannel(int channel)
+{
+	for (auto& kv : actions)
+	{
+		vector<Action>& as = kv.second;
+		as.erase(std::remove_if(as.begin(), as.end(), [=](const Action& a) { return a.channel == channel; }), as.end());
+	}
+	optimize_();
 }
 
 
@@ -87,29 +126,36 @@ bool hasActions(int channel)
 /* -------------------------------------------------------------------------- */
 
 
-bool canRecord(const Channel* ch)
+bool isActive()
 {
-	/* Can record on a channel if the recorder is active and ((channel is MIDI) or 
-	(SAMPLE type with data in it)). */
-	return active && (ch->type == ChannelType::MIDI || (ch->type == ChannelType::SAMPLE && ch->hasData()));	
+	return active;	
+}
+
+
+void enable()
+{
+	active = true;
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void record(int channel, int frame, uint32_t value)
+Action* rec(int channel, int frame, uint32_t value)
 {
+	if (!active) return nullptr;
+
 	Action action(channel, frame, value);
 
-	/* If key frame doesn't exist yet, create it brand new with an already filled
-	vector (with one action). std::initializer_list is currently the only way to 
-	push back a vector in a map. It hurts, I know. */
+	/* If key frame doesn't exist yet, create it brand new with an empty
+	vector. */
 
 	if (actions.count(frame) == 0)
-		actions.emplace(frame, std::initializer_list<Action>{ action });
-	else
-		actions[frame].push_back(action);
+		actions[frame] = {};
+	
+	actions[frame].push_back(action);
+
+	return &actions[frame].back();
 }
 
 

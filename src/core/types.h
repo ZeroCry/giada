@@ -29,10 +29,19 @@
 #define G_TYPES_H
 
 
+#include <cstdint>
+
+
 namespace giada
 {
 using Pixel = int;
 using Frame = int;
+
+
+enum class ActionType : std::uint32_t
+{
+	NOTE_ON = 0x900000, NOTE_OFF = 0x800000
+};
 
 
 enum class ChannelType : int 

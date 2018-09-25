@@ -52,20 +52,27 @@ Deletes all recorded actions. */
 
 void clearAll();
 
+/* clearChannel
+Clear all actions from a channel. */
+
+void clearChannel(int channel);
+
 /* hasActions
 Checks if the channel has at least one action recorded. */
 
 bool hasActions(int channel);
 
-/* canRecord
-Can a channel record an action? Call this one BEFORE rec(). */
+/* isActive
+Is recorder active? Call this one BEFORE rec(). */
 
-bool canRecord(const Channel* ch);
+bool isActive();
 
-/* record
- * Records an action. */
+void enable();
 
-void record(int channel, int frame, uint32_t value);
+/* rec
+Records an action. */
+
+Action* rec(int channel, int frame, uint32_t value);
 
 /* forEachAction
 Applies a read-only callback on each action recorded. */
