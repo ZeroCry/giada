@@ -30,6 +30,8 @@
 
 
 #include <functional>
+#include "../types.h"
+#include "../midiEvent.h"
 
 
 class Channel;
@@ -45,7 +47,7 @@ namespace recorder
 /* init
 Initializes the recorder: everything starts from here. */
 
-void init();
+void init(pthread_mutex_t* mixerMutex);
 
 /* clearAll
 Deletes all recorded actions. */
@@ -53,9 +55,14 @@ Deletes all recorded actions. */
 void clearAll();
 
 /* clearChannel
-Clear all actions from a channel. */
+Clears all actions from a channel. */
 
 void clearChannel(int channel);
+
+/* clearAction
+Clears the actions by type from a channel. */
+
+void clearAction(int channel, ActionType t);
 
 /* hasActions
 Checks if the channel has at least one action recorded. */
@@ -68,11 +75,12 @@ Is recorder active? Call this one BEFORE rec(). */
 bool isActive();
 
 void enable();
+void disable();
 
 /* rec
 Records an action. */
 
-Action* rec(int channel, int frame, uint32_t value);
+Action* rec(int channel, int frame, MidiEvent e);
 
 /* forEachAction
 Applies a read-only callback on each action recorded. */

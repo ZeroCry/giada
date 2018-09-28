@@ -29,18 +29,18 @@
 #define G_TYPES_H
 
 
-#include <cstdint>
-
-
 namespace giada
 {
 using Pixel = int;
 using Frame = int;
 
 
-enum class ActionType : std::uint32_t
+enum class ActionType : int
 {
-	NOTE_ON = 0x900000, NOTE_OFF = 0x800000
+	NOTE_ON   = 0x90, 
+	NOTE_OFF  = 0x80, 
+	NOTE_KILL = 0x00,
+	ENVELOPE  = 0xB0
 };
 
 

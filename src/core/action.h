@@ -41,13 +41,6 @@ struct Action
 	int       channel;
 	Frame     frame;
 	MidiEvent event;
-
-	Action(int channel, Frame frame, uint32_t value)
-	: channel(channel),
-	  frame  (frame),
-	  event  (value)
-	{
-	}
 };
 
 }} // giada::m::

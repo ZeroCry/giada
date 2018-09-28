@@ -9,45 +9,50 @@ TEST_CASE("recorder")
 	using namespace giada;
 	using namespace giada::m;
 
-	recorder::init();
+	pthread_mutex_t mutex;
+	pthread_mutex_init(&mutex, nullptr);
+
+	recorder::init(&mutex);
 	recorder::enable();
 
 	REQUIRE(recorder::hasActions(/*ch=*/0) == false);
 
-	SECTION("Test record single action")
+	SECTION("Test record")
 	{
-		const int   ch = 0;
-		const Frame f  = 0;
+		const int       ch = 0;
+		const Frame     f1 = 0;
+		const Frame     f2 = 70;
+		const MidiEvent e1 = MidiEvent(static_cast<int>(ActionType::NOTE_ON), 0x00, 0x00);
+		const MidiEvent e2 = MidiEvent(static_cast<int>(ActionType::NOTE_OFF), 0x00, 0x00);
 
-		recorder::rec(ch, f, 0x000000);
-
-		REQUIRE(recorder::hasActions(ch) == true);
-	}
-
-	SECTION("Test record, two actions on same frame")
-	{
-		const int   ch = 0;
-		const Frame f  = 0;
-
-		recorder::rec(ch, f, 0x000000);
-		recorder::rec(ch, f, 0x000001);
+		recorder::rec(ch, f1, e1);
+		recorder::rec(ch, f2, e2);
 
 		REQUIRE(recorder::hasActions(ch) == true);
 
-		SECTION("Test record, another action on a different frame and channel")
+		SECTION("Test clear actions by channel")
 		{
-			const int   ch = 1;
-			const Frame f  = 70;
+			const int       ch = 1;
+			const Frame     f1 = 100;
+			const Frame     f2 = 200;
+			const MidiEvent e1 = MidiEvent(static_cast<int>(ActionType::NOTE_ON), 0x00, 0x00);
+			const MidiEvent e2 = MidiEvent(static_cast<int>(ActionType::NOTE_OFF), 0x00, 0x00);
 
-			recorder::rec(ch, f, 0x000002);
+			recorder::rec(ch, f1, e1);
+			recorder::rec(ch, f2, e2);
 
-			REQUIRE(recorder::hasActions(ch) == true);
+			recorder::clearChannel(/*channel=*/0);
+			
+			REQUIRE(recorder::hasActions(/*channel=*/0) == false);
+			REQUIRE(recorder::hasActions(/*channel=*/1) == true);
+		}
 
-			SECTION("Test clear actions by channel")
-			{
-				recorder::clearChannel(0);
-				REQUIRE(recorder::hasActions(0) == false);
-			}
+		SECTION("Test clear actions by type")
+		{
+			recorder::clearAction(/*channel=*/0, ActionType::NOTE_ON);
+			recorder::clearAction(/*channel=*/0, ActionType::NOTE_OFF);
+			
+			REQUIRE(recorder::hasActions(/*channel=*/0) == false);
 		}
 	}
 

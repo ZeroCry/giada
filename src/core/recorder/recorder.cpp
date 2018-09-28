@@ -28,6 +28,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <cassert>
 #include "../action.h"
 #include "../channel.h"
 #include "recorder.h"
@@ -43,7 +44,16 @@ namespace recorder
 {
 namespace
 {
+/* actions
+The big map of actions {frame : actions[]}. This belongs to Recorder, but it
+is often parsed by Mixer. So every "write" action performed on it (add, 
+remove, ...) must be guarded by a trylock on the mixerMutex. */
+
 map<Frame, vector<Action>> actions;
+
+/* mixerMutex */
+
+pthread_mutex_t* mixerMutex = nullptr;
 bool active = false;
 
 
@@ -62,10 +72,27 @@ void optimize_()
 /* -------------------------------------------------------------------------- */
 
 
+void removeIf_(std::function<bool(const Action&)> f)
+{
+	assert(mixerMutex != nullptr);
+	while (pthread_mutex_trylock(mixerMutex) == 0) {
+		for (auto& kv : actions) {
+			vector<Action>& as = kv.second;
+			as.erase(std::remove_if(as.begin(), as.end(), f), as.end());
+		}
+		optimize_();
+		pthread_mutex_unlock(mixerMutex);
+		break;		
+	}
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 void debug_()
 {
-	for (auto& kv : actions)
-	{
+	for (auto& kv : actions) {
 		printf("frame: %d\n", kv.first);
 		for (const Action& action : kv.second)
 			printf(" channel=%d, value=0x%X\n", action.channel, action.event.getRaw());	
@@ -79,10 +106,10 @@ void debug_()
 /* -------------------------------------------------------------------------- */
 
 
-void init()
+void init(pthread_mutex_t* m)
 {
+	mixerMutex = m;
 	active = false;
-	clearAll();	
 }
 
 
@@ -91,7 +118,12 @@ void init()
 
 void clearAll()
 {
-	actions.clear();
+	assert(mixerMutex != nullptr);
+	while (pthread_mutex_trylock(mixerMutex) == 0) {
+		actions.clear();
+		pthread_mutex_unlock(mixerMutex);
+		break;
+	}
 }
 
 
@@ -101,12 +133,19 @@ void clearAll()
 
 void clearChannel(int channel)
 {
-	for (auto& kv : actions)
-	{
-		vector<Action>& as = kv.second;
-		as.erase(std::remove_if(as.begin(), as.end(), [=](const Action& a) { return a.channel == channel; }), as.end());
-	}
-	optimize_();
+	removeIf_([=](const Action& a) { return a.channel == channel; });
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void clearAction(int channel, ActionType t)
+{
+	removeIf_([=](const Action& a)
+	{ 
+		return a.channel == channel && a.event.getStatus() == static_cast<int>(t);
+	});
 }
 
 
@@ -126,26 +165,19 @@ bool hasActions(int channel)
 /* -------------------------------------------------------------------------- */
 
 
-bool isActive()
-{
-	return active;	
-}
-
-
-void enable()
-{
-	active = true;
-}
+bool isActive() { return active; }
+void enable()   { active = true; }
+void disable()  { active = false; }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-Action* rec(int channel, int frame, uint32_t value)
+Action* rec(int channel, int frame, MidiEvent event)
 {
 	if (!active) return nullptr;
 
-	Action action(channel, frame, value);
+	Action action{ channel, frame, event };
 
 	/* If key frame doesn't exist yet, create it brand new with an empty
 	vector. */
