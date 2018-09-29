@@ -1,6 +1,7 @@
 #include "../src/core/recorder/recorder.h"
 #include "../src/core/const.h"
 #include "../src/core/types.h"
+#include "../src/core/action.h"
 #include <catch.hpp>
 
 
@@ -25,10 +26,12 @@ TEST_CASE("recorder")
 		const MidiEvent e1 = MidiEvent(static_cast<int>(ActionType::NOTE_ON), 0x00, 0x00);
 		const MidiEvent e2 = MidiEvent(static_cast<int>(ActionType::NOTE_OFF), 0x00, 0x00);
 
-		recorder::rec(ch, f1, e1);
-		recorder::rec(ch, f2, e2);
+		const Action* a1 = recorder::rec(ch, f1, e1);
+		const Action* a2 = recorder::rec(ch, f2, e2);
 
 		REQUIRE(recorder::hasActions(ch) == true);
+		REQUIRE(a1->frame == f1);
+		REQUIRE(a2->frame == f2);
 
 		SECTION("Test clear actions by channel")
 		{
@@ -54,6 +57,24 @@ TEST_CASE("recorder")
 			
 			REQUIRE(recorder::hasActions(/*channel=*/0) == false);
 		}
+
+
+		SECTION("Test BPM update")
+		{
+			REQUIRE(a1->frame == f1);
+			REQUIRE(a2->frame == f2);
+
+			recorder::updateBpm(60.0f, 120.0f, 44100);  // scaling up
+
+			REQUIRE(a1->frame == f1 / 2);
+			REQUIRE(a2->frame == f2 / 2);
+
+			recorder::updateBpm(120.0f, 60.0f, 44100);  // scaling down
+
+			REQUIRE(a1->frame == f1);
+			REQUIRE(a2->frame == f2);
+		}
+
 	}
 
 	SECTION("Test retrieval")
@@ -85,10 +106,6 @@ TEST_CASE("recorder")
 	}
 
 	SECTION("Test optimization")
-	{
-	}
-
-	SECTION("Test BPM update")
 	{
 	}
 

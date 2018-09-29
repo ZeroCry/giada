@@ -95,7 +95,8 @@ void debug_()
 	for (auto& kv : actions) {
 		printf("frame: %d\n", kv.first);
 		for (const Action& action : kv.second)
-			printf(" channel=%d, value=0x%X\n", action.channel, action.event.getRaw());	
+			printf(" %p - frame=%d, channel=%d, value=0x%X\n", 
+				(void*) &action, action.frame, action.channel, action.event.getRaw());	
 	}
 }
 } // {anonymous}
@@ -110,6 +111,7 @@ void init(pthread_mutex_t* m)
 {
 	mixerMutex = m;
 	active = false;
+	clearAll();
 }
 
 
@@ -188,6 +190,45 @@ Action* rec(int channel, int frame, MidiEvent event)
 	actions[frame].push_back(action);
 
 	return &actions[frame].back();
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void updateBpm(float oldval, float newval, int oldquanto)
+{
+	/* TODO - This algorithm might be slow as f**k. Instead of updating keys in
+	the existing map, we create a temporary map with the updated keys. Then we 
+	swap it with the original one (moved, not copied). */
+
+	map<Frame, vector<Action>> tmp;
+
+	for (auto& kv : actions)
+	{
+		/* The frame computation cannot be precise (float to int conversion). A new 
+		frame can be 44099 and the quantizer set to 44100. That would mean two recs 
+		completely useless. So we compute a reject value ('delta'): if it's lower 
+		than 6 frames the new frame is collapsed with a quantized frame. 
+		TODO - maybe 6 frames are too low */
+
+		Frame frame = ((float) kv.first / newval) * oldval;
+		if (frame != 0) {
+			Frame delta = oldquanto % frame;
+			if (delta > 0 && delta <= 6)
+				frame = frame + delta;
+		}
+
+		/* The value is the original array of actions stored in the old map. An
+		update to all actions is required. Don't copy the vector, move it: we want
+		to keep the original references. */
+
+		tmp[frame] = std::move(kv.second);
+		for (Action& action : tmp[frame])
+			action.frame = frame;
+	}
+
+	actions = std::move(tmp);
 }
 
 

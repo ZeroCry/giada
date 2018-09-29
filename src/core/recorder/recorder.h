@@ -87,6 +87,22 @@ Applies a read-only callback on each action recorded. */
 
 void forEachAction(std::function<void(const Action&)> f);
 
+/* updateBpm
+Changes actions position by calculating the new bpm value. */
+
+void updateBpm(float oldval, float newval, int oldquanto);
+
+/* updateSamplerate
+Changes actions position by taking in account the new samplerate. If 
+f_system == f_patch nothing will change, otherwise the conversion is 
+mandatory. */
+
+void updateSamplerate(int systemRate, int patchRate);
+
+void expand(int old_fpb, int new_fpb);
+void shrink(int new_fpb);
+
+
 }}}; // giada::m::recorder::
 
 #endif
