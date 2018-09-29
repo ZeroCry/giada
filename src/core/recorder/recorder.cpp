@@ -91,6 +91,38 @@ void removeIf_(std::function<bool(const Action&)> f)
 /* -------------------------------------------------------------------------- */
 
 
+/* updateKeyFrames_
+Generates a copy (actually, a move) of the original map of actions by updating
+the key frames in it, according to an external lambda function f. */
+
+void updateKeyFrames_(std::function<Frame(Frame old)> f)
+{
+	/* TODO - This algorithm might be slow as f**k. Instead of updating keys in
+	the existing map, we create a temporary map with the updated keys. Then we 
+	swap it with the original one (moved, not copied). */
+	
+	map<Frame, vector<Action>> tmp;
+
+	for (auto& kv : actions)
+	{
+		Frame frame = f(kv.first);
+
+		/* The value is the original array of actions stored in the old map. An
+		update to all actions is required. Don't copy the vector, move it: we want
+		to keep the original references. */
+
+		tmp[frame] = std::move(kv.second);
+		for (Action& action : tmp[frame])
+			action.frame = frame;
+	}
+
+	actions = std::move(tmp);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 void debug_()
 {
 	for (auto& kv : actions) {
@@ -199,37 +231,20 @@ Action* rec(int channel, int frame, MidiEvent event)
 
 void updateBpm(float oldval, float newval, int oldquanto)
 {
-	/* TODO - This algorithm might be slow as f**k. Instead of updating keys in
-	the existing map, we create a temporary map with the updated keys. Then we 
-	swap it with the original one (moved, not copied). */
-
-	map<Frame, vector<Action>> tmp;
-
-	for (auto& kv : actions)
+	updateKeyFrames_([=](Frame old) 
 	{
-		/* The frame computation cannot be precise (float to int conversion). A new 
-		frame can be 44099 and the quantizer set to 44100. That would mean two recs 
-		completely useless. So we compute a reject value ('delta'): if it's lower 
-		than 6 frames the new frame is collapsed with a quantized frame. 
-		TODO - maybe 6 frames are too low */
-
-		Frame frame = ((float) kv.first / newval) * oldval;
+		/* The division here cannot be precise. A new frame can be 44099 and the 
+		quantizer set to 44100. That would mean two recs completely useless. So we 
+		compute a reject value ('scarto'): if it's lower than 6 frames the new frame 
+		is collapsed with a quantized frame. FIXME - maybe 6 frames are too low. */
+		Frame frame = (old / newval) * oldval;
 		if (frame != 0) {
 			Frame delta = oldquanto % frame;
 			if (delta > 0 && delta <= 6)
 				frame = frame + delta;
 		}
-
-		/* The value is the original array of actions stored in the old map. An
-		update to all actions is required. Don't copy the vector, move it: we want
-		to keep the original references. */
-
-		tmp[frame] = std::move(kv.second);
-		for (Action& action : tmp[frame])
-			action.frame = frame;
-	}
-
-	actions = std::move(tmp);
+		return frame;
+	});
 }
 
 
@@ -238,36 +253,12 @@ void updateBpm(float oldval, float newval, int oldquanto)
 
 void updateSamplerate(int systemRate, int patchRate)
 {
-	/* TODO - This algorithm might be slow as f**k. Instead of updating keys in
-	the existing map, we create a temporary map with the updated keys. Then we 
-	swap it with the original one (moved, not copied). */
-
 	if (systemRate == patchRate)
 		return;
 
-	gu_log("[recorder::updateSamplerate] systemRate=%d, patchRate=%d: converting...\n", 
-		systemRate, patchRate);
-
 	float ratio = systemRate / (float) patchRate;
 
-	map<Frame, vector<Action>> tmp;
-
-	for (auto& kv : actions)
-	{
-		Frame frame = floorf(kv.first * ratio);
-
-		/* The value is the original array of actions stored in the old map. An
-		update to all actions is required. Don't copy the vector, move it: we want
-		to keep the original references. */
-
-		tmp[frame] = std::move(kv.second);
-		for (Action& action : tmp[frame])
-			action.frame = frame;
-
-		gu_log("[recorder::updateSamplerate]   oldFrame=%d, newFrame=%d\n", kv.first, frame);
-	}
-
-	actions = std::move(tmp);
+	updateKeyFrames_([=](Frame old) { return floorf(old * ratio); });
 }
 
 
