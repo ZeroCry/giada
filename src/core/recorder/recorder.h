@@ -80,7 +80,7 @@ void disable();
 /* rec
 Records an action. */
 
-Action* rec(int channel, int frame, MidiEvent e);
+const Action* rec(int channel, int frame, MidiEvent e, const Action* prev);
 
 /* forEachAction
 Applies a read-only callback on each action recorded. */

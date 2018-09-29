@@ -26,12 +26,16 @@ TEST_CASE("recorder")
 		const MidiEvent e1 = MidiEvent(static_cast<int>(ActionType::NOTE_ON), 0x00, 0x00);
 		const MidiEvent e2 = MidiEvent(static_cast<int>(ActionType::NOTE_OFF), 0x00, 0x00);
 
-		const Action* a1 = recorder::rec(ch, f1, e1);
-		const Action* a2 = recorder::rec(ch, f2, e2);
+		const Action* a1 = recorder::rec(ch, f1, e1, nullptr);
+		const Action* a2 = recorder::rec(ch, f2, e2, a1);
 
 		REQUIRE(recorder::hasActions(ch) == true);
 		REQUIRE(a1->frame == f1);
 		REQUIRE(a2->frame == f2);
+		REQUIRE(a1->prev == nullptr);
+		REQUIRE(a1->next == a2);
+		REQUIRE(a2->prev == a1);
+		REQUIRE(a2->next == nullptr);
 
 		SECTION("Test clear actions by channel")
 		{
@@ -41,8 +45,8 @@ TEST_CASE("recorder")
 			const MidiEvent e1 = MidiEvent(static_cast<int>(ActionType::NOTE_ON), 0x00, 0x00);
 			const MidiEvent e2 = MidiEvent(static_cast<int>(ActionType::NOTE_OFF), 0x00, 0x00);
 
-			recorder::rec(ch, f1, e1);
-			recorder::rec(ch, f2, e2);
+			recorder::rec(ch, f1, e1, nullptr);
+			recorder::rec(ch, f2, e2, nullptr);
 
 			recorder::clearChannel(/*channel=*/0);
 			

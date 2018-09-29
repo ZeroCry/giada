@@ -97,6 +97,10 @@ the key frames in it, according to an external lambda function f. */
 
 void updateKeyFrames_(std::function<Frame(Frame old)> f)
 {
+	/* TODO TRY LOCK!!!! */
+	/* TODO TRY LOCK!!!! */
+	/* TODO TRY LOCK!!!! */
+
 	/* TODO - This algorithm might be slow as f**k. Instead of updating keys in
 	the existing map, we create a temporary map with the updated keys. Then we 
 	swap it with the original one (moved, not copied). */
@@ -208,21 +212,30 @@ void disable()  { active = false; }
 /* -------------------------------------------------------------------------- */
 
 
-Action* rec(int channel, int frame, MidiEvent event)
+const Action* rec(int channel, int frame, MidiEvent event, const Action* prev)
 {
 	if (!active) return nullptr;
 
-	Action action{ channel, frame, event };
-
-	/* If key frame doesn't exist yet, create it brand new with an empty
-	vector. */
-
-	if (actions.count(frame) == 0)
-		actions[frame] = {};
+	/* TODO TRY LOCK!!!! */
+	/* TODO TRY LOCK!!!! */
+	/* TODO TRY LOCK!!!! */
 	
-	actions[frame].push_back(action);
+	/* If key frame doesn't exist yet, the [] operator in std::map is smart enough 
+	to insert a new item first. */
+	
+	actions[frame].push_back(Action{ channel, frame, event, nullptr, nullptr });
 
-	return &actions[frame].back();
+	/* Update the curr-next pointers in action, if a previous action has been
+	provided. Cast away the constness of prev: yes, recorder is allowed to do it.
+	Recorder is the sole owner and manager of all actions ;) */
+
+	Action* curr = &actions[frame].back();
+	if (prev != nullptr) {
+		const_cast<Action*>(prev)->next = curr;
+		curr->prev = prev;
+	}
+
+	return curr;
 }
 
 
@@ -289,6 +302,15 @@ void expand(int old_fpb, int new_fpb)
 		}
 	}
 #endif
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void shrink(int new_fpb)
+{
+
 }
 
 

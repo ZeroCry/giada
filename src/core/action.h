@@ -41,6 +41,8 @@ struct Action
 	int       channel;
 	Frame     frame;
 	MidiEvent event;
+	const Action* prev;
+	const Action* next;
 };
 
 }} // giada::m::
