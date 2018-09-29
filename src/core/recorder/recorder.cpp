@@ -29,6 +29,7 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include "../../utils/log.h"
 #include "../action.h"
 #include "../channel.h"
 #include "recorder.h"
@@ -229,6 +230,74 @@ void updateBpm(float oldval, float newval, int oldquanto)
 	}
 
 	actions = std::move(tmp);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void updateSamplerate(int systemRate, int patchRate)
+{
+	/* TODO - This algorithm might be slow as f**k. Instead of updating keys in
+	the existing map, we create a temporary map with the updated keys. Then we 
+	swap it with the original one (moved, not copied). */
+
+	if (systemRate == patchRate)
+		return;
+
+	gu_log("[recorder::updateSamplerate] systemRate=%d, patchRate=%d: converting...\n", 
+		systemRate, patchRate);
+
+	float ratio = systemRate / (float) patchRate;
+
+	map<Frame, vector<Action>> tmp;
+
+	for (auto& kv : actions)
+	{
+		Frame frame = floorf(kv.first * ratio);
+
+		/* The value is the original array of actions stored in the old map. An
+		update to all actions is required. Don't copy the vector, move it: we want
+		to keep the original references. */
+
+		tmp[frame] = std::move(kv.second);
+		for (Action& action : tmp[frame])
+			action.frame = frame;
+
+		gu_log("[recorder::updateSamplerate]   oldFrame=%d, newFrame=%d\n", kv.first, frame);
+	}
+
+	actions = std::move(tmp);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void expand(int old_fpb, int new_fpb)
+{
+	/* This algorithm requires multiple passages if we expand from e.g. 2 to 16 
+	beats, precisely 16 / 2 - 1 = 7 times (-1 is the first group, which exists 
+	yet). If we expand by a non-multiple, the result is zero, due to float->int 
+	implicit cast. */
+#if 0
+	int pass = (int) (new_fpb / old_fpb) - 1;
+	if (pass == 0) pass = 1;
+
+	size_type init_fs = actions.size();
+
+	for (unsigned z=1; z<=pass; z++) {
+		for (unsigned i=0; i<init_fs; i++) {
+			unsigned newframe = frames.at(i) + (old_fpb*z);
+			frames.push_back(newframe);
+			global.push_back(actions);
+			for (unsigned k=0; k<global.at(i).size(); k++) {
+				action* a = global.at(i).at(k);
+				rec(a->chan, a->type, newframe, a->iValue, a->fValue);
+			}
+		}
+	}
+#endif
 }
 
 

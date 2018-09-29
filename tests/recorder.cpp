@@ -21,7 +21,7 @@ TEST_CASE("recorder")
 	SECTION("Test record")
 	{
 		const int       ch = 0;
-		const Frame     f1 = 0;
+		const Frame     f1 = 10;
 		const Frame     f2 = 70;
 		const MidiEvent e1 = MidiEvent(static_cast<int>(ActionType::NOTE_ON), 0x00, 0x00);
 		const MidiEvent e2 = MidiEvent(static_cast<int>(ActionType::NOTE_OFF), 0x00, 0x00);
@@ -75,6 +75,18 @@ TEST_CASE("recorder")
 			REQUIRE(a2->frame == f2);
 		}
 
+		SECTION("Test samplerate update")
+		{
+			recorder::updateSamplerate(44100, 22050); // scaling down
+			
+			REQUIRE(a1->frame == f1 * 2);
+			REQUIRE(a2->frame == f2 * 2);
+
+			recorder::updateSamplerate(22050, 44100); // scaling up
+
+			REQUIRE(a1->frame == f1);
+			REQUIRE(a2->frame == f2);
+		}
 	}
 
 	SECTION("Test retrieval")
