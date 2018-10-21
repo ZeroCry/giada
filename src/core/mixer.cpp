@@ -352,6 +352,8 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 
 	prepareBuffers(out);
 
+	// TODO - move lock here
+
 	for (unsigned j=0; j<bufferSize; j++) {
 		processLineIn(in, j);   // TODO - can go outside this loop
 
@@ -377,6 +379,8 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 	}
 	
 	renderIO(out, in);
+
+	// TODO - move unlock here
 
 	/* Post processing. */
 	for (unsigned j=0; j<bufferSize; j++) {

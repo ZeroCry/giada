@@ -60,13 +60,27 @@ bool active = false;
 
 /* -------------------------------------------------------------------------- */
 
+
+void trylock_(std::function<void()> f)
+{
+	assert(mixerMutex != nullptr);
+	while (pthread_mutex_trylock(mixerMutex) == 0) {
+		f();
+		pthread_mutex_unlock(mixerMutex);
+		break;
+	}
+}
+
+
+/* -------------------------------------------------------------------------- */
+
 /* optimize
 Removes frames without actions. */
 
-void optimize_()
+void optimize_(map<Frame, vector<Action>>& map)
 {
-	for (auto it = actions.cbegin(); it != actions.cend();)
-	  it->second.size() == 0 ? it = actions.erase(it) : ++it;
+	for (auto it = map.cbegin(); it != map.cend();)
+		it->second.size() == 0 ? it = map.erase(it) : ++it;
 }
 
 
@@ -75,16 +89,15 @@ void optimize_()
 
 void removeIf_(std::function<bool(const Action&)> f)
 {
-	assert(mixerMutex != nullptr);
-	while (pthread_mutex_trylock(mixerMutex) == 0) {
-		for (auto& kv : actions) {
-			vector<Action>& as = kv.second;
-			as.erase(std::remove_if(as.begin(), as.end(), f), as.end());
-		}
-		optimize_();
-		pthread_mutex_unlock(mixerMutex);
-		break;		
+	map<Frame, vector<Action>> temp = actions;
+
+	for (auto& kv : temp) {
+		vector<Action>& as = kv.second;
+		as.erase(std::remove_if(as.begin(), as.end(), f), as.end());
 	}
+	optimize_(temp);
+
+	trylock_([&](){ actions = temp; });
 }
 
 
@@ -97,10 +110,6 @@ the key frames in it, according to an external lambda function f. */
 
 void updateKeyFrames_(std::function<Frame(Frame old)> f)
 {
-	/* TODO TRY LOCK!!!! */
-	/* TODO TRY LOCK!!!! */
-	/* TODO TRY LOCK!!!! */
-
 	/* TODO - This algorithm might be slow as f**k. Instead of updating keys in
 	the existing map, we create a temporary map with the updated keys. Then we 
 	swap it with the original one (moved, not copied). */
@@ -120,7 +129,7 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 			action.frame = frame;
 	}
 
-	actions = std::move(tmp);
+	trylock_([&](){ actions = std::move(tmp); });
 }
 
 
@@ -169,7 +178,6 @@ void clearAll()
 /* -------------------------------------------------------------------------- */
 
 
-
 void clearChannel(int channel)
 {
 	removeIf_([=](const Action& a) { return a.channel == channel; });
@@ -212,19 +220,19 @@ void disable()  { active = false; }
 /* -------------------------------------------------------------------------- */
 
 
-const Action* rec(int channel, int frame, MidiEvent event, const Action* prev)
+const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev)
 {
 	if (!active) return nullptr;
 
-	/* TODO TRY LOCK!!!! */
-	/* TODO TRY LOCK!!!! */
-	/* TODO TRY LOCK!!!! */
-	
-	/* If key frame doesn't exist yet, the [] operator in std::map is smart enough 
-	to insert a new item first. */
-	
-	actions[frame].push_back(Action{ channel, frame, event, nullptr, nullptr });
+	map<Frame, vector<Action>> temp = actions;
 
+	/* If key frame doesn't exist yet, the [] operator in std::map is smart enough 
+	to insert a new item first. Then swap the temp map with the original one. */
+	
+	temp[frame].push_back(Action{ channel, frame, event, nullptr, nullptr });
+
+	trylock_([&](){ actions = temp; });
+	
 	/* Update the curr-next pointers in action, if a previous action has been
 	provided. Cast away the constness of prev: yes, recorder is allowed to do it.
 	Recorder is the sole owner and manager of all actions ;) */
@@ -311,6 +319,16 @@ void expand(int old_fpb, int new_fpb)
 void shrink(int new_fpb)
 {
 
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+const vector<Action>& getActionsOnFrame(Frame frame)
+{
+	assert(actions.count(frame) > 0);
+	return actions[frame];
 }
 
 

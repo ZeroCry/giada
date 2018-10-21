@@ -29,6 +29,7 @@
 #define G_RECORDER_H
 
 
+#include <vector>
 #include <functional>
 #include "../types.h"
 #include "../midiEvent.h"
@@ -80,7 +81,7 @@ void disable();
 /* rec
 Records an action. */
 
-const Action* rec(int channel, int frame, MidiEvent e, const Action* prev);
+const Action* rec(int channel, Frame frame, MidiEvent e, const Action* prev);
 
 /* forEachAction
 Applies a read-only callback on each action recorded. */
@@ -102,6 +103,7 @@ void updateSamplerate(int systemRate, int patchRate);
 void expand(int old_fpb, int new_fpb);
 void shrink(int new_fpb);
 
+const std::vector<Action>& getActionsOnFrame(Frame frame);
 
 }}}; // giada::m::recorder::
 
