@@ -37,10 +37,6 @@
 #endif
 
 
-class RtAudio;
-class Mixer;
-
-
 namespace giada {
 namespace m {
 namespace kernelAudio
@@ -56,10 +52,10 @@ struct JackState
 
 #endif
 
-int openDevice();
-int closeDevice();
-int startStream();
-int stopStream();
+int  openDevice();
+void closeDevice();
+int  startStream();
+int  stopStream();
 
 bool getStatus();
 bool isProbed(unsigned dev);

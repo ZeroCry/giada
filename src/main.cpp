@@ -51,7 +51,7 @@
 #include "core/pluginHost.h"
 
 
-std::atomic<bool> G_quit;
+std::atomic<bool> G_quit(false);
 gdMainWindow*     G_MainWin = nullptr;
 
 
@@ -59,20 +59,11 @@ int main(int argc, char** argv)
 {
 	using namespace giada;
 
-	G_quit.store(false);
-
-	m::init::prepareParser();
-	m::init::prepareMidiMap();
-	m::init::prepareKernelAudio();
-	m::init::prepareKernelMIDI();
-	m::init::startKernelAudio();
-	m::init::startGUI(argc, argv);
-	m::init::startRenderer();
+	m::init::startup(argc, argv);
 
 	int ret = Fl::run();
 
-	m::init::stopGUI();	
-	m::init::stopRenderer();
+	m::init::shutdown();
 
 	return ret;
 }

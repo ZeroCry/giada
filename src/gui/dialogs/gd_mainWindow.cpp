@@ -27,6 +27,7 @@
 
 #include <FL/Fl.H>
 #include "../../core/const.h"
+#include "../../core/conf.h"
 #include "../../core/init.h"
 #include "../../utils/gui.h"
 #include "../elems/basics/boxtypes.h"
@@ -118,7 +119,12 @@ void gdMainWindow::cb_endprogram()
 {
 	if (!gdConfirmWin("Warning", "Quit Giada: are you sure?"))
 		return;
-	m::init::shutdown();
+
+	m::conf::mainWindowX = x();
+	m::conf::mainWindowY = y();
+	m::conf::mainWindowW = w();
+	m::conf::mainWindowH = h();
+
 	hide();
 	delete this;
 }

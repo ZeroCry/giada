@@ -240,19 +240,19 @@ string getDeviceName(unsigned dev)
 /* -------------------------------------------------------------------------- */
 
 
-int closeDevice()
+void closeDevice()
 {
 	if (rtSystem->isStreamOpen()) {
+/*
 #if defined(__linux__) || defined(__APPLE__)
 		rtSystem->abortStream(); // stopStream seems to lock the thread
 #elif defined(_WIN32)
 		rtSystem->stopStream();	 // on Windows it's the opposite
-#endif
+#endif*/
 		rtSystem->closeStream();
 		delete rtSystem;
 		rtSystem = nullptr;
 	}
-	return 1;
 }
 
 

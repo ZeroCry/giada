@@ -83,34 +83,32 @@ void videoThreadCallback_()
 			u::time::sleep(G_GUI_REFRESH_RATE);
 		}
 }
-} // {anonymous}
 
 
 /* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
 
 
-void prepareParser()
+void initConf_()
 {
-	time_t t;
-  time (&t);
-	gu_log("[init] Giada " G_VERSION_STR " - %s", ctime(&t));
-
-	conf::read();
+	if (!conf::read())
+		gu_log("[init] Can't read configuration file! Using default values\n");
+	
 	patch::init();
-
+	midimap::init();
+	midimap::setDefault();
+	
 	if (!gu_logInit(conf::logMode))
 		gu_log("[init] log init failed! Using default stdout\n");
 
-	gu_log("[init] configuration file ready\n");
+	if (midimap::read(conf::midiMapPath) != MIDIMAP_READ_OK)
+		gu_log("[init] MIDI map read failed!\n");
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void prepareKernelAudio()
+void initAudio_()
 {
   kernelAudio::openDevice();
   clock::init(conf::samplerate, conf::midiTCfps);
@@ -131,37 +129,29 @@ void prepareKernelAudio()
 
 #endif
 
+	if (!kernelAudio::getStatus())
+		return;
+
+	kernelAudio::startStream();
+	rendererThread = std::thread(renderer::render);
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void prepareKernelMIDI()
+void initMIDI_()
 {
 	kernelMidi::setApi(conf::midiSystem);
 	kernelMidi::openOutDevice(conf::midiPortOut);
-	kernelMidi::openInDevice(conf::midiPortIn);
+	kernelMidi::openInDevice(conf::midiPortIn);	
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void prepareMidiMap()
-{
-	midimap::init();
-	midimap::setDefault();
-
-	if (midimap::read(conf::midiMapPath) != MIDIMAP_READ_OK)
-		gu_log("[prepareMidiMap] MIDI map read failed!\n");
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void startGUI(int argc, char** argv)
+void initGUI_(int argc, char** argv)
 {
 	/* This enables the FLTK lock and start the runtime multithreading support. */
 
@@ -199,44 +189,70 @@ void startGUI(int argc, char** argv)
 #endif
 }
 
-/* -------------------------------------------------------------------------- */
-
-
-void startRenderer()
-{
-	rendererThread = std::thread(m::renderer::render);
-}
-
 
 /* -------------------------------------------------------------------------- */
 
 
-void stopRenderer()
+void shutdownAudio_()
 {
-	m::renderer::trigger(); // Unlock the render last time
+#ifdef WITH_VST
+
+	pluginHost::freeAllStacks(&mixer::channels, &mixer::mutex);
+  pluginHost::close();
+	gu_log("[init] PluginHost cleaned up\n");
+
+#endif
+
+	/* Close the renderer: unlock it the last time, now G_quit is false and the 
+	renderer loop will quit. */
+	
+	renderer::trigger();
 	rendererThread.join();
+
+	if (kernelAudio::getStatus()) {
+		kernelAudio::closeDevice();
+		gu_log("[init] KernelAudio closed\n");
+		mixer::close();
+		gu_log("[init] Mixer closed\n");
+	}
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void stopGUI()
+void shutdownGUI_()
 {
+	/* Close any open subwindow, especially before cleaning PluginHost to avoid 
+	mess. */
+
+	gu_closeAllSubwindows();
+	gu_log("[init] all subwindows closed\n");
+
 #ifdef WITH_VST
 	juce::shutdownJuce_GUI();
 #endif
+
 	videoThread.join();	
 }
+} // {anonymous}
 
 
 /* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 
-void startKernelAudio()
+void startup(int argc, char** argv)
 {
-	if (kernelAudio::getStatus())
-		kernelAudio::startStream();
+	time_t t;
+  time (&t);
+	gu_log("[init] Giada " G_VERSION_STR " - %s", ctime(&t));
+
+	initConf_();
+	initAudio_();
+	initMIDI_();
+	initGUI_(argc, argv);
 }
 
 
@@ -247,43 +263,14 @@ void shutdown()
 {
 	G_quit.store(true);
 
-	/* store position and size of the main window for the next startup */
-
-	conf::mainWindowX = G_MainWin->x();
-	conf::mainWindowY = G_MainWin->y();
-	conf::mainWindowW = G_MainWin->w();
-	conf::mainWindowH = G_MainWin->h();
-
-	/* close any open subwindow, especially before cleaning PluginHost to
-	 * avoid mess */
-
-	gu_closeAllSubwindows();
-	gu_log("[init] all subwindows closed\n");
-
-	/* write configuration file */
+	shutdownGUI_();
 
 	if (!conf::write())
 		gu_log("[init] error while saving configuration file!\n");
 	else
 		gu_log("[init] configuration saved\n");
 
-	recorder_DEPR_::clearAll();
-	gu_log("[init] Recorder cleaned up\n");
-
-#ifdef WITH_VST
-
-	pluginHost::freeAllStacks(&mixer::channels, &mixer::mutex);
-  pluginHost::close();
-	gu_log("[init] PluginHost cleaned up\n");
-
-#endif
-
-	if (kernelAudio::getStatus()) {
-		kernelAudio::closeDevice();
-		gu_log("[init] KernelAudio closed\n");
-		mixer::close();
-		gu_log("[init] Mixer closed\n");
-	}
+	shutdownAudio_();
 
 	gu_log("[init] Giada " G_VERSION_STR " closed\n\n");
 	gu_logClose();
