@@ -25,34 +25,12 @@
  * -------------------------------------------------------------------------- */
 
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 #include <atomic>
-#if defined(__linux__) || defined(__APPLE__)
-	#include <unistd.h>
-#endif
 #include <FL/Fl.H>
 #include "core/init.h"
-#include "core/const.h"
-#include "core/patch.h"
-#include "core/conf.h"
-#include "core/midiMapConf.h"
-#include "core/mixer.h"
-#include "core/clock.h"
-#include "core/mixerHandler.h"
-#include "core/kernelAudio.h"
-#include "core/kernelMidi.h"
-#include "core/recorder.h"
-#include "core/queue.h"
-#include "utils/gui.h"
-#include "utils/time.h"
-#include "gui/dialogs/gd_mainWindow.h"
-#include "core/pluginHost.h"
-
 
 std::atomic<bool> G_quit(false);
-gdMainWindow*     G_MainWin = nullptr;
+class gdMainWindow* G_MainWin = nullptr;
 
 
 int main(int argc, char** argv)
