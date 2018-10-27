@@ -56,12 +56,6 @@ std::atomic<bool> G_quit;
 gdMainWindow*     G_MainWin;
 
 
-giada::m::Queue<float, 8192> G_Queue;
-std::mutex                   G_renderMutex;
-std::condition_variable      G_renderCond;
-bool                         G_renderReady;
-
-
 void video()
 {
 	using namespace giada;
@@ -87,7 +81,7 @@ int main(int argc, char** argv)
 	init_startGUI(argc, argv);
 	init_startKernelAudio();
 	
-	std::thread rendererThread(m::renderer::renderAudio);
+	std::thread rendererThread(m::renderer::render);
 	std::thread videoThread(video);
 
   Fl::lock();
@@ -102,7 +96,7 @@ int main(int argc, char** argv)
 	juce::shutdownJuce_GUI();
 #endif
 
-	G_renderCond.notify_one(); // Unlock the render last time
+	m::renderer::trigger(); // Unlock the render last time
 
 	rendererThread.join();
 	videoThread.join();

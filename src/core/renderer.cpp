@@ -34,19 +34,46 @@
 #include "renderer.h"
 
 
-extern std::atomic<bool>            G_quit;
-extern giada::m::Queue<float, 8192> G_Queue;
-extern std::mutex                   G_renderMutex;
-extern std::condition_variable      G_renderCond;
+extern std::atomic<bool> G_quit;
 
 
 namespace giada {
 namespace m {
 namespace renderer
 {
-void renderAudio()
+namespace
 {
-	puts("RENDER AUDIO START");
+std::condition_variable cond;
+
+
+/* -------------------------------------------------------------------------- */
+
+
+} // {anonymous}
+
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+
+Queue<float, 8192> queue;
+std::mutex         mutex;
+bool               ready;
+
+
+void trigger()
+{
+	cond.notify_one();
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void render()
+{
+	puts("RENDER START");
 	AudioBuffer in, out;
 
 	out.alloc(4096, 2);
@@ -59,8 +86,8 @@ void renderAudio()
 		int full = 0;
 
 		{ // lock scope
-			std::unique_lock<std::mutex> lock(G_renderMutex);
-			G_renderCond.wait(lock);
+			std::unique_lock<std::mutex> lock(mutex);
+			cond.wait(lock);
 
 			for (Channel* channel : mixer::channels)
 			{
@@ -71,33 +98,12 @@ void renderAudio()
 
 		for (int i = 0; i < out.countFrames(); i++)
 		{
-			bool done = G_Queue.push(out[i][0]); 
+			bool done = queue.push(out[i][0]); 
 			if (!done) full++; 
 		}
 
 		if (full > 0)
 			printf("%d times queue full!\n", full);
 	}
-
-	#if 0
-	while (true)
-	{
-		if (G_render.load())
-		{
-			G_render.store(false);
-
-			out.clear();
-
-			for (Channel* channel : mixer::channels)
-			{
-				channel->prepareBuffer(false);
-				channel->process(out, in, true, false);
-			}
-
-			for (int i = 0; i < out.countFrames(); i++)
-				bool done = G_Queue.push(out[i][0]); 
-		}
-	}
-	#endif
 }
 }}} // giada::m::renderer::;

@@ -43,11 +43,8 @@
 #include "midiChannel.h"
 #include "audioBuffer.h"
 #include "queue.h"
+#include "renderer.h"
 #include "mixer.h"
-
-
-extern giada::m::Queue<float, 8192> G_Queue;
-extern std::condition_variable      G_renderCond;
 
 
 namespace giada {
@@ -353,7 +350,7 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 	for (int i = 0; i < out.countFrames(); i++)
 	{
 		float v    = 0;
-		bool  done = G_Queue.pop(v); 
+		bool  done = renderer::queue.pop(v); 
 		
 		out[i][0] = v;
 
@@ -370,7 +367,7 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 	out.setData(nullptr, 0, 0);
 	in.setData(nullptr, 0, 0);
 
-	G_renderCond.notify_one();
+	renderer::trigger();
 	
 	return 0;
 

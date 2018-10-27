@@ -36,7 +36,12 @@ namespace giada {
 namespace m {
 namespace renderer
 {
-void renderAudio();
+extern Queue<float, 8192> queue;
+extern std::mutex         mutex;
+extern bool               ready;
+
+void trigger();
+void render();
 }}} // giada::m::renderer::;
 
 
