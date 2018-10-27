@@ -54,8 +54,8 @@
 #include "kernelAudio.h"
 
 
-extern bool		 		   G_quit;
-extern gdMainWindow *G_MainWin;
+extern std::atomic<bool> G_quit;
+extern gdMainWindow*     G_MainWin;
 
 
 using namespace giada::m;
@@ -172,7 +172,7 @@ void init_startKernelAudio()
 
 void init_shutdown()
 {
-	G_quit = true;
+	G_quit.store(true);
 
 	/* store position and size of the main window for the next startup */
 

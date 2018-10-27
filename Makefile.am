@@ -13,6 +13,7 @@ sourcesExtra =
 sourcesMain = src/main.cpp 
 sourcesCore =                            \
 	src/core/const.h                       \
+	src/core/queue.h                       \
 	src/core/types.h                       \
 	src/core/range.h                       \
 	src/core/action.h                      \
@@ -58,6 +59,8 @@ sourcesCore =                            \
 	src/core/recorder/recorder.cpp         \
 	src/core/mixer.h                       \
 	src/core/mixer.cpp                     \
+	src/core/renderer.h                    \
+	src/core/renderer.cpp                  \
 	src/core/storager.h	                   \
 	src/core/storager.cpp                  \
 	src/core/clock.h                       \

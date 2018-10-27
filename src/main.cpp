@@ -25,7 +25,10 @@
  * -------------------------------------------------------------------------- */
 
 
-#include <pthread.h>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
 #if defined(__linux__) || defined(__APPLE__)
 	#include <unistd.h>
 #endif
@@ -41,33 +44,53 @@
 #include "core/kernelAudio.h"
 #include "core/kernelMidi.h"
 #include "core/recorder.h"
+#include "core/queue.h"
+#include "core/renderer.h"
 #include "utils/gui.h"
 #include "utils/time.h"
 #include "gui/dialogs/gd_mainWindow.h"
 #include "core/pluginHost.h"
 
 
-pthread_t     G_videoThread;
-bool          G_quit;
-gdMainWindow* G_MainWin;
+std::atomic<bool> G_quit;
+gdMainWindow*     G_MainWin;
 
 
-void* videoThreadCb(void* arg);
+giada::m::Queue<float, 8192> G_Queue;
+std::mutex                   G_renderMutex;
+std::condition_variable      G_renderCond;
+bool                         G_renderReady;
+
+
+void video()
+{
+	using namespace giada;
+
+	if (m::kernelAudio::getStatus())
+		while (G_quit.load() == false) {
+			gu_refreshUI();
+			u::time::sleep(G_GUI_REFRESH_RATE);
+		}
+}
 
 
 int main(int argc, char** argv)
 {
-	G_quit = false;
+	using namespace giada;
+
+	G_quit.store(false);
 
 	init_prepareParser();
 	init_prepareMidiMap();
 	init_prepareKernelAudio();
 	init_prepareKernelMIDI();
 	init_startGUI(argc, argv);
+	init_startKernelAudio();
+	
+	std::thread rendererThread(m::renderer::renderAudio);
+	std::thread videoThread(video);
 
   Fl::lock();
-	pthread_create(&G_videoThread, nullptr, videoThreadCb, nullptr);
-	init_startKernelAudio();
 
 #ifdef WITH_VST
 	juce::initialiseJuce_GUI();
@@ -79,20 +102,13 @@ int main(int argc, char** argv)
 	juce::shutdownJuce_GUI();
 #endif
 
-	pthread_join(G_videoThread, nullptr);
+	G_renderCond.notify_one(); // Unlock the render last time
+
+	rendererThread.join();
+	videoThread.join();
+	
 	return ret;
 }
 
 
-void* videoThreadCb(void* arg)
-{
-	using namespace giada;
 
-	if (m::kernelAudio::getStatus())
-		while (!G_quit)	{
-			gu_refreshUI();
-			u::time::sleep(G_GUI_REFRESH_RATE);
-		}
-	pthread_exit(nullptr);
-	return 0;
-}

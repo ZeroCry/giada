@@ -25,6 +25,7 @@
  * -------------------------------------------------------------------------- */
 
 
+#include <condition_variable>
 #include <cassert>
 #include <cstring>
 #include "../deps/rtaudio-mod/RtAudio.h"
@@ -41,7 +42,12 @@
 #include "sampleChannel.h"
 #include "midiChannel.h"
 #include "audioBuffer.h"
+#include "queue.h"
 #include "mixer.h"
+
+
+extern giada::m::Queue<float, 8192> G_Queue;
+extern std::condition_variable      G_renderCond;
 
 
 namespace giada {
@@ -155,8 +161,8 @@ void prepareBuffers(AudioBuffer& outBuf)
 {
 	outBuf.clear();
 	vChanInToOut.clear();
-	for (Channel* channel : channels)
-		channel->prepareBuffer(clock::isRunning());
+	//for (Channel* channel : channels)
+	//	channel->prepareBuffer(clock::isRunning());
 }
 
 
@@ -333,10 +339,44 @@ void allocVirtualInput(Frame frames)
 int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize, 
 	double streamTime, RtAudioStreamStatus status, void* userData)
 {
+	AudioBuffer out, in;
+	out.setData((float*) outBuf, bufferSize, G_MAX_IO_CHANS);
+	if (kernelAudio::isInputEnabled())
+		in.setData((float*) inBuf, bufferSize, G_MAX_IO_CHANS);
+
+	prepareBuffers(out);
+
+	//printf("%d\n", out.countFrames());
+
+	int empty = 0;
+
+	for (int i = 0; i < out.countFrames(); i++)
+	{
+		float v    = 0;
+		bool  done = G_Queue.pop(v); 
+		
+		out[i][0] = v;
+
+		if (!done) empty++;
+	}	
+
+	if (empty > 0)
+		printf("%d times queue empty!\n", empty);
+
+
+	/* Unset data in buffers. If you don't do this, buffers go out of scope and
+	destroy memory allocated by RtAudio ---> havoc. */
+	
+	out.setData(nullptr, 0, 0);
+	in.setData(nullptr, 0, 0);
+
+	G_renderCond.notify_one();
+	
+	return 0;
+
+#if 0
 	if (!ready)
 		return 0;
-
-	pthread_mutex_lock(&mutex);
 
 #ifdef __linux__
 	clock::recvJackSync();
@@ -351,8 +391,6 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 	peakIn  = 0.0f;  // reset peak calculator
 
 	prepareBuffers(out);
-
-	// TODO - move lock here
 
 	for (unsigned j=0; j<bufferSize; j++) {
 		processLineIn(in, j);   // TODO - can go outside this loop
@@ -380,8 +418,6 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 	
 	renderIO(out, in);
 
-	// TODO - move unlock here
-
 	/* Post processing. */
 	for (unsigned j=0; j<bufferSize; j++) {
 		finalizeOutput(out, j); 
@@ -396,9 +432,8 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 	out.setData(nullptr, 0, 0);
 	in.setData(nullptr, 0, 0);
 
-	pthread_mutex_unlock(&mutex);
-
 	return 0;
+#endif
 }
 
 

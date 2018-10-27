@@ -33,6 +33,7 @@
 #include <functional>
 #include "../types.h"
 #include "../midiEvent.h"
+#include "../queue.h"
 
 
 class Channel;
