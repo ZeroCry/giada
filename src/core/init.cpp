@@ -41,7 +41,6 @@
 #include "../gui/dialogs/gd_mainWindow.h"
 #include "../gui/dialogs/gd_warnings.h"
 #include "../glue/main.h"
-#include "init.h"
 #include "mixer.h"
 #include "wave.h"
 #include "const.h"
@@ -56,6 +55,7 @@
 #include "midiMapConf.h"
 #include "kernelMidi.h"
 #include "kernelAudio.h"
+#include "init.h"
 
 
 extern std::atomic<bool> G_quit;
@@ -69,7 +69,6 @@ namespace init
 namespace
 {
 std::thread videoThread;
-std::thread rendererThread;
 
 
 /* -------------------------------------------------------------------------- */
@@ -132,8 +131,8 @@ void initAudio_()
 	if (!kernelAudio::getStatus())
 		return;
 
+	renderer::init();
 	kernelAudio::startStream();
-	rendererThread = std::thread(renderer::render);
 }
 
 
@@ -203,11 +202,7 @@ void shutdownAudio_()
 
 #endif
 
-	/* Close the renderer: unlock it the last time, now G_quit is false and the 
-	renderer loop will quit. */
-	
-	renderer::trigger();
-	rendererThread.join();
+	renderer::shutdown();
 
 	if (kernelAudio::getStatus()) {
 		kernelAudio::closeDevice();

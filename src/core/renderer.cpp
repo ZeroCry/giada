@@ -25,6 +25,7 @@
  * -------------------------------------------------------------------------- */
 
 
+#include <thread>
 #include <mutex>
 #include <condition_variable>
 #include "channel.h"
@@ -34,9 +35,6 @@
 #include "renderer.h"
 
 
-extern std::atomic<bool> G_quit;
-
-
 namespace giada {
 namespace m {
 namespace renderer
@@ -44,42 +42,21 @@ namespace renderer
 namespace
 {
 std::condition_variable cond;
+std::thread thread;
+bool running = false;
 
 
 /* -------------------------------------------------------------------------- */
 
 
-} // {anonymous}
-
-
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-
-Queue<float, 8192> queue;
-std::mutex         mutex;
-bool               ready;
-
-
-void trigger()
+void render_()
 {
-	cond.notify_one();
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void render()
-{
-	puts("RENDER START");
 	AudioBuffer in, out;
 
 	out.alloc(4096, 2);
 	in.alloc(4096, 2);
 
-	while (G_quit.load() == false)
+	while (running)
 	{
 		out.clear();
 
@@ -106,4 +83,55 @@ void render()
 			printf("%d times queue full!\n", full);
 	}
 }
+
+} // {anonymous}
+
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+
+Queue<float, 8192> queue;
+std::mutex         mutex;
+bool               ready;
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void init()
+{
+	running = true;
+	thread  = std::thread(render_);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void shutdown()
+{
+	/* Trigger the rendering one last time. 'running' is false now so the 
+	renderer loop will quit. */
+
+	running = false;
+	trigger();
+	thread.join();	
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void trigger()
+{
+	cond.notify_one();
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+
 }}} // giada::m::renderer::;
