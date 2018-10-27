@@ -29,13 +29,17 @@
 #define G_INIT_H
 
 
-void init_prepareParser();
-void init_startGUI(int argc, char** argv);
-void init_prepareKernelAudio();
-void init_prepareKernelMIDI();
-void init_prepareMidiMap();
-void init_startKernelAudio();
-void init_shutdown();
-
+namespace giada {
+namespace m {
+namespace init
+{
+void prepareParser();
+void startGUI(int argc, char** argv);
+void prepareKernelAudio();
+void prepareKernelMIDI();
+void prepareMidiMap();
+void startKernelAudio();
+void shutdown();
+}}} // giada::m::init
 
 #endif

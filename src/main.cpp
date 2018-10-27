@@ -74,17 +74,15 @@ int main(int argc, char** argv)
 
 	G_quit.store(false);
 
-	init_prepareParser();
-	init_prepareMidiMap();
-	init_prepareKernelAudio();
-	init_prepareKernelMIDI();
-	init_startGUI(argc, argv);
-	init_startKernelAudio();
+	m::init::prepareParser();
+	m::init::prepareMidiMap();
+	m::init::prepareKernelAudio();
+	m::init::prepareKernelMIDI();
+	m::init::startKernelAudio();
+	m::init::startGUI(argc, argv);
 	
 	std::thread rendererThread(m::renderer::render);
 	std::thread videoThread(video);
-
-  Fl::lock();
 
 #ifdef WITH_VST
 	juce::initialiseJuce_GUI();

@@ -40,6 +40,9 @@
 #include "gd_mainWindow.h"
 
 
+using namespace giada;
+
+
 extern gdMainWindow *G_MainWin;
 
 
@@ -115,7 +118,7 @@ void gdMainWindow::cb_endprogram()
 {
 	if (!gdConfirmWin("Warning", "Quit Giada: are you sure?"))
 		return;
-	init_shutdown();
+	m::init::shutdown();
 	hide();
 	delete this;
 }

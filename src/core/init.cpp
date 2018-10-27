@@ -25,6 +25,7 @@
  * -------------------------------------------------------------------------- */
 
 
+#include <FL/Fl.H>
 #include <ctime>
 #ifdef __APPLE__
 	#include <pwd.h>
@@ -58,10 +59,11 @@ extern std::atomic<bool> G_quit;
 extern gdMainWindow*     G_MainWin;
 
 
-using namespace giada::m;
-
-
-void init_prepareParser()
+namespace giada {
+namespace m {
+namespace init
+{
+void prepareParser()
 {
 	time_t t;
   time (&t);
@@ -80,7 +82,7 @@ void init_prepareParser()
 /* -------------------------------------------------------------------------- */
 
 
-void init_prepareKernelAudio()
+void prepareKernelAudio()
 {
   kernelAudio::openDevice();
   clock::init(conf::samplerate, conf::midiTCfps);
@@ -107,7 +109,7 @@ void init_prepareKernelAudio()
 /* -------------------------------------------------------------------------- */
 
 
-void init_prepareKernelMIDI()
+void prepareKernelMIDI()
 {
 	kernelMidi::setApi(conf::midiSystem);
 	kernelMidi::openOutDevice(conf::midiPortOut);
@@ -118,21 +120,25 @@ void init_prepareKernelMIDI()
 /* -------------------------------------------------------------------------- */
 
 
-void init_prepareMidiMap()
+void prepareMidiMap()
 {
 	midimap::init();
 	midimap::setDefault();
 
 	if (midimap::read(conf::midiMapPath) != MIDIMAP_READ_OK)
-		gu_log("[init_prepareMidiMap] MIDI map read failed!\n");
+		gu_log("[prepareMidiMap] MIDI map read failed!\n");
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void init_startGUI(int argc, char** argv)
+void startGUI(int argc, char** argv)
 {
+	/* This enables the FLTK lock and start the runtime multithreading support. */
+
+	Fl::lock();
+
 	/* This is of paramount importance on Linux with VST enabled, otherwise many
 	plug-ins go nuts and crash hard. It seems that some plug-ins or our Juce-based
 	PluginHost use Xlib concurrently. */
@@ -160,7 +166,7 @@ void init_startGUI(int argc, char** argv)
 /* -------------------------------------------------------------------------- */
 
 
-void init_startKernelAudio()
+void startKernelAudio()
 {
 	if (kernelAudio::getStatus())
 		kernelAudio::startStream();
@@ -170,7 +176,7 @@ void init_startKernelAudio()
 /* -------------------------------------------------------------------------- */
 
 
-void init_shutdown()
+void shutdown()
 {
 	G_quit.store(true);
 
@@ -215,3 +221,4 @@ void init_shutdown()
 	gu_log("[init] Giada " G_VERSION_STR " closed\n\n");
 	gu_logClose();
 }
+}}} // giada::m::init
