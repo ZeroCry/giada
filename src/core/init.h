@@ -34,11 +34,14 @@ namespace m {
 namespace init
 {
 void prepareParser();
-void startGUI(int argc, char** argv);
 void prepareKernelAudio();
 void prepareKernelMIDI();
 void prepareMidiMap();
+void startGUI(int argc, char** argv);
+void startRenderer();
 void startKernelAudio();
+void stopGUI();
+void stopRenderer();
 void shutdown();
 }}} // giada::m::init
 

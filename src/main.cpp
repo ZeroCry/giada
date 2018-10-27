@@ -45,7 +45,6 @@
 #include "core/kernelMidi.h"
 #include "core/recorder.h"
 #include "core/queue.h"
-#include "core/renderer.h"
 #include "utils/gui.h"
 #include "utils/time.h"
 #include "gui/dialogs/gd_mainWindow.h"
@@ -53,19 +52,7 @@
 
 
 std::atomic<bool> G_quit;
-gdMainWindow*     G_MainWin;
-
-
-void video()
-{
-	using namespace giada;
-
-	if (m::kernelAudio::getStatus())
-		while (G_quit.load() == false) {
-			gu_refreshUI();
-			u::time::sleep(G_GUI_REFRESH_RATE);
-		}
-}
+gdMainWindow*     G_MainWin = nullptr;
 
 
 int main(int argc, char** argv)
@@ -80,25 +67,13 @@ int main(int argc, char** argv)
 	m::init::prepareKernelMIDI();
 	m::init::startKernelAudio();
 	m::init::startGUI(argc, argv);
-	
-	std::thread rendererThread(m::renderer::render);
-	std::thread videoThread(video);
-
-#ifdef WITH_VST
-	juce::initialiseJuce_GUI();
-#endif
+	m::init::startRenderer();
 
 	int ret = Fl::run();
 
-#ifdef WITH_VST
-	juce::shutdownJuce_GUI();
-#endif
+	m::init::stopGUI();	
+	m::init::stopRenderer();
 
-	m::renderer::trigger(); // Unlock the render last time
-
-	rendererThread.join();
-	videoThread.join();
-	
 	return ret;
 }
 

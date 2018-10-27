@@ -25,7 +25,7 @@
  * -------------------------------------------------------------------------- */
 
 
-#include <FL/Fl.H>
+#include <thread>
 #include <ctime>
 #ifdef __APPLE__
 	#include <pwd.h>
@@ -33,8 +33,10 @@
 #if defined(__linux__) && defined(WITH_VST)
 	#include <X11/Xlib.h> // For XInitThreads
 #endif
+#include <FL/Fl.H>
 #include "../utils/log.h"
 #include "../utils/fs.h"
+#include "../utils/time.h"
 #include "../utils/gui.h"
 #include "../gui/dialogs/gd_mainWindow.h"
 #include "../gui/dialogs/gd_warnings.h"
@@ -46,6 +48,7 @@
 #include "clock.h"
 #include "channel.h"
 #include "mixerHandler.h"
+#include "renderer.h"
 #include "patch.h"
 #include "conf.h"
 #include "pluginHost.h"
@@ -63,6 +66,31 @@ namespace giada {
 namespace m {
 namespace init
 {
+namespace
+{
+std::thread videoThread;
+std::thread rendererThread;
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void videoThreadCallback_()
+{
+	if (m::kernelAudio::getStatus())
+		while (G_quit.load() == false) {
+			gu_refreshUI();
+			u::time::sleep(G_GUI_REFRESH_RATE);
+		}
+}
+} // {anonymous}
+
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+
 void prepareParser()
 {
 	time_t t;
@@ -156,12 +184,51 @@ void startGUI(int argc, char** argv)
 	/* never update the GUI elements if kernelAudio::getStatus() is bad, segfaults
 	 * are around the corner */
 
-	if (kernelAudio::getStatus())
-		gu_updateControls();
-  else
+	if (!kernelAudio::getStatus()) {
 		gdAlert("Your soundcard isn't configured correctly.\n"
 			"Check the configuration and restart Giada.");
+		return;
+	}
+
+	gu_updateControls();
+	
+	videoThread = std::thread(videoThreadCallback_);
+
+#ifdef WITH_VST
+	juce::initialiseJuce_GUI();
+#endif
 }
+
+/* -------------------------------------------------------------------------- */
+
+
+void startRenderer()
+{
+	rendererThread = std::thread(m::renderer::render);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void stopRenderer()
+{
+	m::renderer::trigger(); // Unlock the render last time
+	rendererThread.join();
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void stopGUI()
+{
+#ifdef WITH_VST
+	juce::shutdownJuce_GUI();
+#endif
+	videoThread.join();	
+}
+
 
 /* -------------------------------------------------------------------------- */
 
