@@ -125,6 +125,7 @@
 #define G_SYS_API_PULSE   0x20  // 0010 0000
 #define G_SYS_API_WASAPI  0x40  // 0100 0000
 #define G_SYS_API_ANY     0x7F  // 0111 1111
+#define G_FIFO_SIZE       G_MAX_BUF_SIZE * 2
 
 
 

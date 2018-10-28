@@ -336,6 +336,8 @@ void allocVirtualInput(Frame frames)
 int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize, 
 	double streamTime, RtAudioStreamStatus status, void* userData)
 {
+	//printf("time: %f\n", streamTime);
+	
 	AudioBuffer out, in;
 	out.setData((float*) outBuf, bufferSize, G_MAX_IO_CHANS);
 	if (kernelAudio::isInputEnabled())
@@ -348,14 +350,13 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 	int empty = 0;
 
 	for (int i = 0; i < out.countFrames(); i++)
-	{
-		float v    = 0;
-		bool  done = renderer::queue.pop(v); 
-		
-		out[i][0] = v;
-
-		if (!done) empty++;
-	}	
+		for (int j=0; j<out.countChannels(); j++)
+		{
+			float v    = 0;
+			bool  done = renderer::queue.pop(v); 
+			out[i][j] = v;
+			if (!done) empty++;
+		}	
 
 	if (empty > 0)
 		printf("%d times queue empty!\n", empty);

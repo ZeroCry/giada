@@ -138,20 +138,16 @@ Channel* addChannel(ChannelType type)
 	Channel* ch = nullptr;
 	channelManager::create(type, kernelAudio::getRealBufSize(), 
 		conf::inputMonitorDefaultOn, &ch);
+	
 	if (ch == nullptr)
 		return nullptr;
 
-	while (true) {
-		if (pthread_mutex_trylock(&mixer::mutex) != 0)
-			continue;
-		mixer::channels.push_back(ch);
-		pthread_mutex_unlock(&mixer::mutex);
-		break;
-	}
-
+	mixer::channels.push_back(ch);
 	ch->index = getNewChanIndex();
+
 	gu_log("[addChannel] channel index=%d added, type=%d, total=%d\n",
 		ch->index, ch->type, mixer::channels.size());
+	
 	return ch;
 }
 
@@ -161,15 +157,9 @@ Channel* addChannel(ChannelType type)
 
 void deleteChannel(Channel* target)
 {
-	while (true) {
-		if (pthread_mutex_trylock(&mixer::mutex) != 0)
-			continue;
-		auto it = std::find(mixer::channels.begin(), mixer::channels.end(), target);
-		if (it != mixer::channels.end()) 
-			mixer::channels.erase(it);
-		pthread_mutex_unlock(&mixer::mutex);
-		return;
-	}
+	auto it = std::find(mixer::channels.begin(), mixer::channels.end(), target);
+	if (it != mixer::channels.end()) 
+		mixer::channels.erase(it);
 }
 
 

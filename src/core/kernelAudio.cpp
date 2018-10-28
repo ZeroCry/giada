@@ -83,6 +83,7 @@ bool getStatus()
 int openDevice()
 {
 	api = conf::soundSystem;
+
 	gu_log("[KA] using system 0x%x\n", api);
 
 #if defined(__linux__)
@@ -142,8 +143,6 @@ int openDevice()
 	outParams.nChannels    = G_MAX_IO_CHANS;
 	outParams.firstChannel = conf::channelsOut * G_MAX_IO_CHANS; // chan 0=0, 1=2, 2=4, ...
 
-	/* inDevice can be disabled. */
-
 	if (conf::soundDeviceIn != -1) {
 		inParams.deviceId     = conf::soundDeviceIn;
 		inParams.nChannels    = G_MAX_IO_CHANS;
@@ -155,7 +154,6 @@ int openDevice()
 
   RtAudio::StreamOptions options;
   options.streamName = G_APP_NAME;
-  options.numberOfBuffers = 4;
 
 	realBufsize = conf::buffersize;
 
@@ -174,7 +172,7 @@ int openDevice()
 			conf::soundDeviceIn != -1 ? &inParams : nullptr,  // input params if inDevice is selected
 			RTAUDIO_FLOAT32,			              // audio format
 			conf::samplerate, 					        // sample rate
-			&realBufsize, 				              // buffer size in byte
+			&realBufsize, 				              // buffer size in bytes
 			&mixer::masterPlay,                 // audio callback
 			nullptr,									          // user data (unused)
 			&options);
@@ -182,7 +180,7 @@ int openDevice()
 		return 1;
 	}
 	catch (RtAudioError &e) {
-		gu_log("[KA] rtSystem init error: %s\n", e.getMessage().c_str());
+		gu_log("[KA] stream open error: %s\n", e.getMessage().c_str());
 		closeDevice();
 		return 0;
 	}
@@ -419,7 +417,7 @@ int getDefaultOut()
 int	getDeviceByName(const char* name)
 {
 	for (unsigned i=0; i<numDevs; i++)
-		if (name == getDeviceName(i))
+		if (name == getDeviceName(i))  // TODO - wtf?!? comparing pointers!
 			return i;
 	return -1;
 }

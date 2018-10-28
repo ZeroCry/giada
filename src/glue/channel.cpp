@@ -52,6 +52,7 @@
 #include "../core/clock.h"
 #include "../core/pluginHost.h"
 #include "../core/conf.h"
+#include "../core/renderer.h"
 #include "../core/wave.h"
 #include "../core/channel.h"
 #include "../core/sampleChannel.h"
@@ -115,7 +116,9 @@ int loadChannel(SampleChannel* ch, const string& fname)
 
 Channel* addChannel(int column, ChannelType type, int size)
 {
-	Channel* ch    = m::mh::addChannel(type);
+	Channel* ch;
+	m::renderer::lock([&] { ch = m::mh::addChannel(type); });
+
 	geChannel* gch = G_MainWin->keyboard->addChannel(column, ch, size);
 	ch->guiChannel = gch;
 	return ch;
@@ -131,16 +134,18 @@ void deleteChannel(Channel* ch)
 
 	if (!gdConfirmWin("Warning", "Delete channel: are you sure?"))
 		return;
-	recorder_DEPR_::clearChan(ch->index);
-	ch->hasActions = false;
-#ifdef WITH_VST
-	pluginHost::freeStack(pluginHost::CHANNEL, &mixer::mutex, ch);
-#endif
-	Fl::lock();
+
 	G_MainWin->keyboard->deleteChannel(ch->guiChannel);
-	Fl::unlock();
-	mh::deleteChannel(ch);
 	gu_closeAllSubwindows();
+	
+	m::renderer::lock([&] {
+		recorder_DEPR_::clearChan(ch->index);
+		ch->hasActions = false;
+#ifdef WITH_VST
+		pluginHost::freeStack(pluginHost::CHANNEL, &mixer::mutex, ch);
+#endif
+		mh::deleteChannel(ch);
+	});
 }
 
 
@@ -149,24 +154,16 @@ void deleteChannel(Channel* ch)
 
 void freeChannel(Channel* ch)
 {
-	if (ch->isPlaying()) {
-		if (!gdConfirmWin("Warning", "This action will stop the channel: are you sure?"))
-			return;
-	}
-	else
 	if (!gdConfirmWin("Warning", "Free channel: are you sure?"))
 		return;
 
 	G_MainWin->keyboard->freeChannel(ch->guiChannel);
-	m::recorder_DEPR_::clearChan(ch->index);
-	ch->empty();
-
-	/* delete any related subwindow */
-	/** TODO - use gu_closeAllSubwindows()   */
-	G_MainWin->delSubWindow(WID_FILE_BROWSER);
-	G_MainWin->delSubWindow(WID_ACTION_EDITOR);
-	G_MainWin->delSubWindow(WID_SAMPLE_EDITOR);
-	G_MainWin->delSubWindow(WID_FX_LIST);
+	gu_closeAllSubwindows();
+	
+	m::renderer::lock([&] {
+		m::recorder_DEPR_::clearChan(ch->index);
+		ch->empty();
+	});
 }
 
 
@@ -175,9 +172,12 @@ void freeChannel(Channel* ch)
 
 void toggleArm(Channel* ch, bool gui)
 {
-	ch->armed = !ch->armed;
-	if (!gui)
+	m::renderer::lock([&] { ch->armed = !ch->armed; });
+	if (!gui) {
+		Fl::lock();
 		ch->guiChannel->arm->value(ch->armed);
+		Fl::unlock();
+	}
 }
 
 
@@ -187,7 +187,7 @@ void toggleArm(Channel* ch, bool gui)
 void toggleInputMonitor(Channel* ch)
 {
 	SampleChannel* sch = static_cast<SampleChannel*>(ch);
-	sch->inputMonitor = !sch->inputMonitor;
+	m::renderer::lock([&] { sch->inputMonitor = !sch->inputMonitor; });
 }
 
 
@@ -215,7 +215,7 @@ int cloneChannel(Channel* src)
 
 void setVolume(Channel* ch, float v, bool gui, bool editor)
 {
-	ch->volume = v;
+	m::renderer::lock([&]{ ch->volume = v; });
 
 	/* Changing channel volume? Update wave editor (if it's shown). */
 

@@ -44,6 +44,24 @@ namespace
 std::condition_variable cond;
 std::thread thread;
 bool running = false;
+AudioBuffer in, out;
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void fillBuffersLocking_()
+{
+	std::unique_lock<std::mutex> lock(mutex);
+	cond.wait(lock);
+
+	out.clear();
+	
+	for (Channel* channel : mixer::channels) {
+		channel->prepareBuffer(false);
+		channel->process(out, in, true, false);
+	}
+}
 
 
 /* -------------------------------------------------------------------------- */
@@ -51,32 +69,16 @@ bool running = false;
 
 void render_()
 {
-	AudioBuffer in, out;
+	while (running) {
 
-	out.alloc(4096, 2);
-	in.alloc(4096, 2);
-
-	while (running)
-	{
-		out.clear();
+		fillBuffersLocking_();
 
 		int full = 0;
-
-		{ // lock scope
-			std::unique_lock<std::mutex> lock(mutex);
-			cond.wait(lock);
-
-			for (Channel* channel : mixer::channels)
-			{
-				channel->prepareBuffer(false);
-				channel->process(out, in, true, false);
+		for (int i=0; i<out.countFrames(); i++) {
+			for (int j=0; j<out.countChannels(); j++) {
+				bool done = queue.push(out[i][j]); 
+				if (!done) full++; 
 			}
-		}
-
-		for (int i = 0; i < out.countFrames(); i++)
-		{
-			bool done = queue.push(out[i][0]); 
-			if (!done) full++; 
 		}
 
 		if (full > 0)
@@ -92,16 +94,18 @@ void render_()
 /* -------------------------------------------------------------------------- */
 
 
-Queue<float, 8192> queue;
-std::mutex         mutex;
-bool               ready;
+Queue<float, G_FIFO_SIZE> queue;
+std::mutex                mutex;
+bool                      ready;
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void init()
+void init(Frame bufferSize)
 {
+	out.alloc(bufferSize, G_MAX_IO_CHANS);
+	in.alloc(bufferSize, G_MAX_IO_CHANS);
 	running = true;
 	thread  = std::thread(render_);
 }
@@ -132,6 +136,13 @@ void trigger()
 
 /* -------------------------------------------------------------------------- */
 
+
+void lock(std::function<void()> f)
+{
+	mutex.lock();
+	f();
+	mutex.unlock();
+}
 
 
 }}} // giada::m::renderer::;

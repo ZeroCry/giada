@@ -204,9 +204,7 @@ gdWindow* gu_getSubwindow(gdWindow* parent, int id)
 
 void gu_closeAllSubwindows()
 {
-	/* don't close WID_FILE_BROWSER, because it's the caller of this
-	 * function */
-
+	G_MainWin->delSubWindow(WID_FILE_BROWSER);
 	G_MainWin->delSubWindow(WID_ACTION_EDITOR);
 	G_MainWin->delSubWindow(WID_SAMPLE_EDITOR);
 	G_MainWin->delSubWindow(WID_FX_LIST);

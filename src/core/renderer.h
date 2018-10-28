@@ -30,21 +30,34 @@
 
 
 #include <mutex>
+#include <functional>
 #include "queue.h"
+#include "const.h"
 
 
 namespace giada {
 namespace m {
 namespace renderer
 {
-extern Queue<float, 8192> queue;
-extern std::mutex         mutex;
-extern bool               ready;
+extern Queue<float, G_FIFO_SIZE> queue;
+extern std::mutex                mutex;
+extern bool                      ready;
 
-void init();
+void init(Frame bufferSize);
 void shutdown();
+
+/* trigger
+Asks the renderer to produce some data (i.e. to fill the FIFO). The renderer
+is dormant otherwise (no busy waits). */
+
 void trigger();
-void render();
+
+/* lock
+Performs callback 'f' by locking the mutex. WARNING: call this from the UI 
+thread or from non-realtime ones! */
+
+void lock(std::function<void()> f);
+
 }}} // giada::m::renderer::;
 
 

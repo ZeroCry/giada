@@ -131,8 +131,8 @@ void initAudio_()
 	if (!kernelAudio::getStatus())
 		return;
 
-	renderer::init();
 	kernelAudio::startStream();
+	renderer::init(kernelAudio::getRealBufSize());
 }
 
 
