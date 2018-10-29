@@ -168,14 +168,9 @@ void initGUI_(int argc, char** argv)
 
   gu_updateMainWinLabel(patch::name == "" ? G_DEFAULT_PATCH_NAME : patch::name);
 
-	/* never update the GUI elements if kernelAudio::getStatus() is bad, segfaults
-	 * are around the corner */
-
-	if (!kernelAudio::getStatus()) {
+	if (!kernelAudio::getStatus())
 		gdAlert("Your soundcard isn't configured correctly.\n"
 			"Check the configuration and restart Giada.");
-		return;
-	}
 
 	gu_updateControls();
 	
