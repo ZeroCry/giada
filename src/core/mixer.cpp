@@ -345,22 +345,11 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 
 	prepareBuffers(out);
 
-	//printf("%d\n", out.countFrames());
-
-	int empty = 0;
+	renderer::render();
 
 	for (int i = 0; i < out.countFrames(); i++)
 		for (int j=0; j<out.countChannels(); j++)
-		{
-			float v    = 0;
-			bool  done = renderer::queue.pop(v); 
-			out[i][j] = v;
-			if (!done) empty++;
-		}	
-
-	if (empty > 0)
-		printf("%d times queue empty!\n", empty);
-
+			out[i][j] = renderer::out[i][j];
 
 	/* Unset data in buffers. If you don't do this, buffers go out of scope and
 	destroy memory allocated by RtAudio ---> havoc. */
@@ -368,7 +357,6 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 	out.setData(nullptr, 0, 0);
 	in.setData(nullptr, 0, 0);
 
-	renderer::trigger();
 	
 	return 0;
 

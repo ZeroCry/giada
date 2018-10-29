@@ -116,8 +116,9 @@ int loadChannel(SampleChannel* ch, const string& fname)
 
 Channel* addChannel(int column, ChannelType type, int size)
 {
-	Channel* ch;
-	m::renderer::lock([&] { ch = m::mh::addChannel(type); });
+	Channel* ch = m::mh::addChannel(type);
+
+	m::renderer::update();
 
 	geChannel* gch = G_MainWin->keyboard->addChannel(column, ch, size);
 	ch->guiChannel = gch;
@@ -215,7 +216,9 @@ int cloneChannel(Channel* src)
 
 void setVolume(Channel* ch, float v, bool gui, bool editor)
 {
-	m::renderer::lock([&]{ ch->volume = v; });
+	ch->volume = v; 
+
+	m::renderer::update();
 
 	/* Changing channel volume? Update wave editor (if it's shown). */
 

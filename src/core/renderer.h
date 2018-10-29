@@ -29,28 +29,35 @@
 #define G_RENDERER_H
 
 
-#include <mutex>
 #include <functional>
-#include "queue.h"
-#include "const.h"
+#include <atomic>
 
 
 namespace giada {
 namespace m {
 namespace renderer
 {
-extern Queue<float, G_FIFO_SIZE> queue;
-extern std::mutex                mutex;
-extern bool                      ready;
+struct RenderData
+{
+	std::vector<Channel*> channels;
+};
+
+
+extern AudioBuffer in, out;
+extern std::atomic<RenderData*> renderData;
+
 
 void init(Frame bufferSize);
 void shutdown();
+
+void update();
+
 
 /* trigger
 Asks the renderer to produce some data (i.e. to fill the FIFO). The renderer
 is dormant otherwise (no busy waits). */
 
-void trigger();
+void render();
 
 /* lock
 Performs callback 'f' by locking the mutex. WARNING: call this from the UI 

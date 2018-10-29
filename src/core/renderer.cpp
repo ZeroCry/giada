@@ -31,6 +31,7 @@
 #include "channel.h"
 #include "mixer.h"
 #include "audioBuffer.h"
+#include "const.h"
 #include "queue.h"
 #include "renderer.h"
 
@@ -41,51 +42,6 @@ namespace renderer
 {
 namespace
 {
-std::condition_variable cond;
-std::thread thread;
-bool running = false;
-AudioBuffer in, out;
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void fillBuffersLocking_()
-{
-	std::unique_lock<std::mutex> lock(mutex);
-	cond.wait(lock);
-
-	out.clear();
-	
-	for (Channel* channel : mixer::channels) {
-		channel->prepareBuffer(false);
-		channel->process(out, in, true, false);
-	}
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void render_()
-{
-	while (running) {
-
-		fillBuffersLocking_();
-
-		int full = 0;
-		for (int i=0; i<out.countFrames(); i++) {
-			for (int j=0; j<out.countChannels(); j++) {
-				bool done = queue.push(out[i][j]); 
-				if (!done) full++; 
-			}
-		}
-
-		if (full > 0)
-			printf("%d times queue full!\n", full);
-	}
-}
-
 } // {anonymous}
 
 
@@ -94,9 +50,27 @@ void render_()
 /* -------------------------------------------------------------------------- */
 
 
-Queue<float, G_FIFO_SIZE> queue;
-std::mutex                mutex;
-bool                      ready;
+AudioBuffer in, out;
+std::atomic<RenderData*> renderData;
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void update()
+{
+	RenderData* oldRenderData = renderData.load();
+	RenderData* newRenderData = new RenderData();
+
+	newRenderData->channels = mixer::channels;
+
+	while (!renderData.compare_exchange_weak(oldRenderData, newRenderData))
+	{
+		std::cout << "ui: can't swap, BUSY!\n";
+	}
+
+	delete oldRenderData;	
+}
 
 
 /* -------------------------------------------------------------------------- */
@@ -106,8 +80,11 @@ void init(Frame bufferSize)
 {
 	out.alloc(bufferSize, G_MAX_IO_CHANS);
 	in.alloc(bufferSize, G_MAX_IO_CHANS);
-	running = true;
-	thread  = std::thread(render_);
+
+	RenderData* rd = new RenderData();
+	rd->channels = mixer::channels;
+
+	renderData.store(rd);
 }
 
 
@@ -116,21 +93,27 @@ void init(Frame bufferSize)
 
 void shutdown()
 {
+	delete renderData;
 	/* Trigger the rendering one last time. 'running' is false now so the 
 	renderer loop will quit. */
 
-	running = false;
-	trigger();
-	thread.join();	
+	//trigger();
+	//thread.join();	
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void trigger()
+void render()
 {
-	cond.notify_one();
+	out.clear();
+
+	RenderData* rd = renderData.load();
+	for (Channel* channel : rd->channels) {
+		channel->prepareBuffer(false);
+		channel->process(out, in, true, false);
+	}
 }
 
 
@@ -139,9 +122,9 @@ void trigger()
 
 void lock(std::function<void()> f)
 {
-	mutex.lock();
-	f();
-	mutex.unlock();
+	//mutex.lock();
+	//f();
+	//mutex.unlock();
 }
 
 

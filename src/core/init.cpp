@@ -112,6 +112,7 @@ void initAudio_()
   kernelAudio::openDevice();
   clock::init(conf::samplerate, conf::midiTCfps);
 	mixer::init(clock::getFramesInLoop(), kernelAudio::getRealBufSize());
+	renderer::init(kernelAudio::getRealBufSize());
 	recorder_DEPR_::init();
 
 #ifdef WITH_VST
@@ -132,7 +133,6 @@ void initAudio_()
 		return;
 
 	kernelAudio::startStream();
-	renderer::init(kernelAudio::getRealBufSize());
 }
 
 
