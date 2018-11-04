@@ -86,7 +86,7 @@ const Action* rec(int channel, Frame frame, MidiEvent e, const Action* prev);
 /* forEachAction
 Applies a read-only callback on each action recorded. */
 
-void forEachAction(std::function<void(const Action&)> f);
+void forEachAction(std::function<void(const Action*)> f);
 
 /* updateBpm
 Changes actions position by calculating the new bpm value. */
@@ -103,7 +103,9 @@ void updateSamplerate(int systemRate, int patchRate);
 void expand(int old_fpb, int new_fpb);
 void shrink(int new_fpb);
 
-const std::vector<Action>& getActionsOnFrame(Frame frame);
+std::vector<const Action*> getActionsOnFrame(Frame frame);
+
+std::vector<const Action*> getActionsOnChannel(int channel);
 
 }}}; // giada::m::recorder::
 

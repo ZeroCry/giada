@@ -34,6 +34,8 @@
 #include "../core/kernelMidi.h"
 #include "../core/channel.h"
 #include "../core/recorder.h"
+#include "../core/recorder/recorder.h"
+#include "../core/action.h"
 #include "../core/mixer.h"
 #include "../core/sampleChannel.h"
 #include "../core/midiChannel.h"
@@ -108,6 +110,9 @@ void clearStartStopActions(geChannel* gch)
 
 bool midiActionCanFit(int chan, int note, int frame_a, int frame_b)
 {
+ 	assert(false); // TODO 
+
+ #if 0
 	namespace mr = m::recorder_DEPR_;
 
 	/* TODO - This is insane, to say the least. Let's wait for recorder refactoring... */
@@ -117,6 +122,7 @@ bool midiActionCanFit(int chan, int note, int frame_a, int frame_b)
     if (frame_b >= c.a1.frame && c.a2.frame >= frame_a && m::MidiEvent(c.a1.iValue).getNote() == note)
 			return false;
 	return true;
+#endif
 }
 
 
@@ -150,14 +156,13 @@ void recordMidiAction(int chan, int note, int velocity, int frame_a, int frame_b
 		frame_a -= overflow;
 	}
 
-	/* Prepare MIDI events. Due to some nasty restrictions on the ancient Recorder,
-	checks for overlapping are done by the caller. TODO ... */
-
 	m::MidiEvent event_a = m::MidiEvent(m::MidiEvent::NOTE_ON,  note, velocity);
 	m::MidiEvent event_b = m::MidiEvent(m::MidiEvent::NOTE_OFF, note, velocity);
 
-	m::recorder_DEPR_::rec(chan, G_ACTION_MIDI, frame_a, event_a.getRaw());
-	m::recorder_DEPR_::rec(chan, G_ACTION_MIDI, frame_b, event_b.getRaw());
+	const m::Action* a = m::recorder::rec(chan, frame_a, event_a, nullptr);
+	const m::Action* b = m::recorder::rec(chan, frame_b, event_b, a);
+
+	gu_log("[c::recordMidiAction] record null.a=%d, null.b%d\n", a == nullptr, b == nullptr);
 }
 
 
@@ -350,8 +355,10 @@ void setVelocity(const Channel* ch, m::recorder_DEPR_::action a, int value)
 /* -------------------------------------------------------------------------- */
 
 
-vector<m::recorder_DEPR_::Composite> getMidiActions(int chan)
+vector<const m::Action*> getMidiActions(int chan)
 {
+	return m::recorder::getActionsOnChannel(chan);
+#if 0
 	vector<m::recorder_DEPR_::Composite> out;
 
 	m::recorder_DEPR_::sortActions();
@@ -405,6 +412,7 @@ vector<m::recorder_DEPR_::Composite> getMidiActions(int chan)
 	}
 
 	return out;
+#endif
 }
 
 }}} // giada::c::recorder::

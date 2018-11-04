@@ -38,6 +38,10 @@ class MidiChannel;
 class geChannel;
 
 
+namespace giada { namespace m {
+class Action;
+}}
+
 namespace giada {
 namespace c     {
 namespace recorder 
@@ -70,7 +74,7 @@ void setVelocity(const Channel* ch, m::recorder_DEPR_::action a, int value);
 Returns a list of Composite actions, ready to be displayed in a MIDI note
 editor as pairs of NoteOn+NoteOff. */
 
-std::vector<m::recorder_DEPR_::Composite> getMidiActions(int channel);
+std::vector<const m::Action*> getMidiActions(int channel);
 
 std::vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type);
 

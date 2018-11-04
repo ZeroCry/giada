@@ -35,7 +35,7 @@ namespace giada {
 namespace v
 {
 geSampleAction::geSampleAction(Pixel X, Pixel Y, Pixel W, Pixel H, 
-	const SampleChannel* ch, m::recorder_DEPR_::action a1, m::recorder_DEPR_::action a2)
+	const SampleChannel* ch, const m::Action* a1, const m::Action* a2)
 : geBaseAction(X, Y, W, H, ch->mode == ChannelMode::SINGLE_PRESS, a1, a2),
   m_ch        (ch)
 {
@@ -53,6 +53,7 @@ void geSampleAction::draw()
 		fl_rectf(x(), y(), w(), h(), color);
 	}
 	else {
+#if 0
 		if (a1.type == G_ACTION_KILL)
 			fl_rect(x(), y(), MIN_WIDTH, h(), color);
 		else {
@@ -63,6 +64,7 @@ void geSampleAction::draw()
 			if (a1.type == G_ACTION_KEYREL)
 				fl_rectf(x()+3, y()+3, w()-6, 8, G_COLOR_GREY_4);
 		}
+#endif
 	}
 }
 }} // giada::v::

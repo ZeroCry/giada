@@ -27,6 +27,7 @@
 
 #include <FL/fl_draw.H>
 #include "../../../core/const.h"
+#include "../../../core/action.h"
 #include "../../../core/midiEvent.h"
 #include "../../../utils/math.h"
 #include "pianoItem.h"
@@ -35,10 +36,10 @@
 namespace giada {
 namespace v
 {
-gePianoItem::gePianoItem(Pixel X, Pixel Y, Pixel W, Pixel H, m::recorder_DEPR_::action a1,
-	m::recorder_DEPR_::action a2)
+gePianoItem::gePianoItem(Pixel X, Pixel Y, Pixel W, Pixel H, const m::Action* a1,
+	const m::Action* a2)
 : geBaseAction(X, Y, W, H, /*resizable=*/true, a1, a2),
-  orphaned    (a2.frame == -1)
+  orphaned    (a2->frame == -1)
 {
 }
 
@@ -70,7 +71,7 @@ void gePianoItem::draw()
 
 Pixel gePianoItem::calcVelocityH() const
 {
-	int v = m::MidiEvent(a1.iValue).getVelocity();
+	int v = a1->event.getVelocity();
 	return u::math::map<int, Pixel>(v, 0, G_MAX_VELOCITY, 0, h() - 3);
 }
 }} // giada::v::

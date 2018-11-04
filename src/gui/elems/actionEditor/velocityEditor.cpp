@@ -25,12 +25,14 @@
  * -------------------------------------------------------------------------- */
 
 
+#include <cassert>
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
 #include "../../../utils/log.h"
 #include "../../../utils/math.h"
 #include "../../../core/const.h"
 #include "../../../core/conf.h"
+#include "../../../core/action.h"
 #include "../../../core/clock.h"
 #include "../../../core/midiChannel.h"
 #include "../../../glue/recorder.h"
@@ -82,7 +84,7 @@ void geVelocityEditor::draw()
 	for (int i=0; i<children(); i++) {
 		geEnvelopePoint* p = static_cast<geEnvelopePoint*>(child(i));
 		if (m_action == nullptr)
-			p->position(p->x(), valueToY(m::MidiEvent(p->a1.iValue).getVelocity()));
+			p->position(p->x(), valueToY(p->a1->event.getVelocity()));
 		Pixel x1 = p->x() + side;
 		Pixel y1 = p->y();
 		Pixel y2 = y() + h();
@@ -123,15 +125,18 @@ void geVelocityEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	vector<mr::Composite> actions = cr::getMidiActions(m_ch->index); 
-	for (mr::Composite comp : actions)
+	vector<const m::Action*> actions = cr::getMidiActions(m_ch->index); 
+	for (const m::Action* action : actions)
 	{
-		gu_log("[geVelocityEditor::rebuild] f=%d\n", comp.a1.frame);
+		if (action->event.getStatus() == m::MidiEvent::NOTE_OFF)
+			continue;
+		
+		gu_log("[geVelocityEditor::rebuild] f=%d\n", action->frame);
 
-		Pixel px = x() + m_base->frameToPixel(comp.a1.frame);
-		Pixel py = y() + valueToY(m::MidiEvent(comp.a1.iValue).getVelocity());
+		Pixel px = x() + m_base->frameToPixel(action->event.getVelocity());
+		Pixel py = y() + valueToY(action->event.getVelocity());
 
-		add(new geEnvelopePoint(px, py, comp.a1));
+		add(new geEnvelopePoint(px, py, action));
 	}
 	
 	resizable(nullptr);
@@ -161,7 +166,7 @@ void geVelocityEditor::onMoveAction()
 
 void geVelocityEditor::onRefreshAction() 
 {
-	c::recorder::setVelocity(m_ch, m_action->a1, yToValue(m_action->y() - y()));
+	//c::recorder::setVelocity(m_ch, m_action->a1, yToValue(m_action->y() - y()));
 
 	m_base->rebuild();  // Rebuild pianoRoll as well
 }

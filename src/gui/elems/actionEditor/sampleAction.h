@@ -37,6 +37,10 @@ class SampleChannel;
 
 
 namespace giada {
+namespace m
+{
+class Action;
+}
 namespace v
 {
 class geSampleAction : public geBaseAction
@@ -48,7 +52,7 @@ private:
 public:
 
 	geSampleAction(Pixel x, Pixel y, Pixel w, Pixel h, const SampleChannel* ch,
-		m::recorder_DEPR_::action a1, m::recorder_DEPR_::action a2);
+		const m::Action* a1, const m::Action* a2);
 
 	void draw() override;
 };

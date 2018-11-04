@@ -131,7 +131,7 @@ void processChannels(const MidiEvent& midiEvent)
 			c::channel::toggleSolo(ch, false);
 		}
 		else if (pure == ch->midiInVolume) {
-			float vf = midiEvent.getVelocity() / 127.0f;
+			float vf = midiEvent.getVelocity() / 127.0f; // TODO: u::math::map
 			gu_log("  >>> volume ch=%d (pure=0x%X, value=%d, float=%f)\n",
 				ch->index, pure, midiEvent.getVelocity(), vf);
 			c::channel::setVolume(ch, vf, false);
@@ -139,7 +139,7 @@ void processChannels(const MidiEvent& midiEvent)
 		else {
 			SampleChannel* sch = static_cast<SampleChannel*>(ch);
 			if (pure == sch->midiInPitch) {
-				float vf = midiEvent.getVelocity() / (127/4.0f); // [0-127] ~> [0.0-4.0]
+				float vf = midiEvent.getVelocity() / (127/4.0f); // [0-127] ~> [0.0-4.0] TODO: u::math::map
 				gu_log("  >>> pitch ch=%d (pure=0x%X, value=%d, float=%f)\n",
 					sch->index, pure, midiEvent.getVelocity(), vf);
 				c::channel::setPitch(sch, vf);

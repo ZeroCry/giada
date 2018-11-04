@@ -30,6 +30,8 @@
 #include "../../../core/conf.h"
 #include "../../../core/const.h"
 #include "../../../core/clock.h"
+#include "../../../core/action.h"
+#include "../../../core/midiEvent.h"
 #include "../../../core/midiChannel.h"
 #include "../../../utils/log.h"
 #include "../../../utils/string.h"
@@ -230,7 +232,7 @@ void gePianoRoll::onAddAction()
 
 void gePianoRoll::onDeleteAction()
 {
-	c::recorder::deleteMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1, m_action->a2);	
+	//c::recorder::deleteMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1, m_action->a2);	
 	
 	m_base->rebuild();  // Rebuild velocityEditor as well
 }
@@ -286,6 +288,7 @@ void gePianoRoll::onResizeAction()
 
 void gePianoRoll::onRefreshAction()
 {
+#if 0
 	namespace cr = c::recorder;
 
 	if (static_cast<gePianoItem*>(m_action)->orphaned)
@@ -303,10 +306,10 @@ void gePianoRoll::onRefreshAction()
 	}	
 	else if (m_action->onLeftEdge) {
 		f1 = m_base->pixelToFrame(p1);
-		f2 = m_action->a2.frame;
+		f2 = m_action->a2->frame;
 	}
 	else if (m_action->onRightEdge) {
-		f1 = m_action->a1.frame;
+		f1 = m_action->a1->frame;
 		f2 = m_base->pixelToFrame(p2);
 	}
 
@@ -325,6 +328,7 @@ void gePianoRoll::onRefreshAction()
 		cr::recordMidiAction(m_ch->index, oldNote, velocity, m_action->a1.frame, m_action->a2.frame);
 
 	m_base->rebuild();  // Rebuild velocityEditor as well
+#endif
 }
 
 
@@ -363,23 +367,28 @@ void gePianoRoll::rebuild()
 	clear();
 	size(m_base->fullWidth, (MAX_KEYS + 1) * CELL_H);
 
-	vector<mr::Composite> actions = cr::getMidiActions(m_ch->index); 
-	for (mr::Composite comp : actions)
+	vector<const m::Action*> actions = cr::getMidiActions(m_ch->index); 
+	for (const m::Action* action : actions)
 	{
-		m::MidiEvent e1 = comp.a1.iValue;
-		m::MidiEvent e2 = comp.a2.iValue;
+		if (action->event.getStatus() == m::MidiEvent::NOTE_OFF)
+			continue;
+
+		const m::Action* a1 = action;
+		const m::Action* a2 = action->next;
+
+		assert(a1 != nullptr && a2 != nullptr);
 
 		gu_log("[gePianoRoll::rebuild] ((0x%X, 0x%X, f=%d) - (0x%X, 0x%X, f=%d))\n", 
-			e1.getStatus(), e1.getNote(), comp.a1.frame,
-			e2.getStatus(), e2.getNote(), comp.a2.frame
+			a1->event.getStatus(), a1->event.getNote(), a1->frame,
+			a2->event.getStatus(), a2->event.getNote(), a2->frame
 		);
 
-		Pixel px = x() + m_base->frameToPixel(comp.a1.frame);
-		Pixel py = y() + noteToY(e1.getNote());
-		Pixel pw = m_base->frameToPixel(comp.a2.frame - comp.a1.frame);
+		Pixel px = x() + m_base->frameToPixel(a1->frame);
+		Pixel py = y() + noteToY(a1->event.getNote());
+		Pixel pw = m_base->frameToPixel(a2->frame - a1->frame);
 		Pixel ph = CELL_H;
 
-		add(new gePianoItem(px, py, pw, ph, comp.a1, comp.a2));
+		add(new gePianoItem(px, py, pw, ph, a1, a2));
 	}
 
 	drawSurface1();

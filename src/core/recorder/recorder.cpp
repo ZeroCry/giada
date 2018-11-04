@@ -26,6 +26,7 @@
 
 
 #include <map>
+#include <memory>
 #include <vector>
 #include <algorithm>
 #include <cassert>
@@ -43,14 +44,17 @@ namespace giada {
 namespace m {
 namespace recorder
 {
+using ActionMap = map<Frame, vector<Action*>>;
+
 namespace
 {
 /* actions
 The big map of actions {frame : actions[]}. This belongs to Recorder, but it
 is often parsed by Mixer. So every "write" action performed on it (add, 
-remove, ...) must be guarded by a trylock on the mixerMutex. */
+remove, ...) must be guarded by a trylock on the mixerMutex. Until a proper
+lock-free solution will be implemented. */
 
-map<Frame, vector<Action>> actions;
+ActionMap actions;
 
 /* mixerMutex */
 
@@ -77,7 +81,7 @@ void trylock_(std::function<void()> f)
 /* optimize
 Removes frames without actions. */
 
-void optimize_(map<Frame, vector<Action>>& map)
+void optimize_(map<Frame, vector<Action*>>& map)
 {
 	for (auto it = map.cbegin(); it != map.cend();)
 		it->second.size() == 0 ? it = map.erase(it) : ++it;
@@ -87,17 +91,29 @@ void optimize_(map<Frame, vector<Action>>& map)
 /* -------------------------------------------------------------------------- */
 
 
-void removeIf_(std::function<bool(const Action&)> f)
+void removeIf_(std::function<bool(const Action*)> f)
 {
-	map<Frame, vector<Action>> temp = actions;
+	ActionMap temp = actions;
 
+	/*
 	for (auto& kv : temp) {
-		vector<Action>& as = kv.second;
+		vector<Action*>& as = kv.second;
 		as.erase(std::remove_if(as.begin(), as.end(), f), as.end());
+	}*/
+	for (auto& kv : temp) {
+		auto i = std::begin(kv.second);
+		while (i != std::end(kv.second)) {
+			if (f(*i)) {
+				delete *i;
+				i = kv.second.erase(i);
+			}
+			else
+				++i;
+		}
 	}
 	optimize_(temp);
 
-	trylock_([&](){ actions = temp; });
+	trylock_([&](){ actions = temp; }); // TODO - or std::move(temp)?
 }
 
 
@@ -114,7 +130,7 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 	the existing map, we create a temporary map with the updated keys. Then we 
 	swap it with the original one (moved, not copied). */
 	
-	map<Frame, vector<Action>> tmp;
+	ActionMap temp;
 
 	for (auto& kv : actions)
 	{
@@ -124,12 +140,12 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 		update to all actions is required. Don't copy the vector, move it: we want
 		to keep the original references. */
 
-		tmp[frame] = std::move(kv.second);
-		for (Action& action : tmp[frame])
-			action.frame = frame;
+		temp[frame] = std::move(kv.second);
+		for (Action* action : temp[frame])
+			action->frame = frame;
 	}
 
-	trylock_([&](){ actions = std::move(tmp); });
+	trylock_([&](){ actions = std::move(temp); });
 }
 
 
@@ -138,12 +154,14 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 
 void debug_()
 {
+	puts("-------------");
 	for (auto& kv : actions) {
 		printf("frame: %d\n", kv.first);
-		for (const Action& action : kv.second)
-			printf(" %p - frame=%d, channel=%d, value=0x%X\n", 
-				(void*) &action, action.frame, action.channel, action.event.getRaw());	
+		for (const Action* action : kv.second)
+			printf(" this=%p - frame=%d, channel=%d, value=0x%X, next=%p\n", 
+				(void*) action, action->frame, action->channel, action->event.getRaw(), (void*) action->next);	
 	}
+	puts("-------------");
 }
 } // {anonymous}
 
@@ -166,12 +184,7 @@ void init(pthread_mutex_t* m)
 
 void clearAll()
 {
-	assert(mixerMutex != nullptr);
-	while (pthread_mutex_trylock(mixerMutex) == 0) {
-		actions.clear();
-		pthread_mutex_unlock(mixerMutex);
-		break;
-	}
+	removeIf_([=](const Action* a) { return true; }); // TODO optimize this
 }
 
 
@@ -180,7 +193,7 @@ void clearAll()
 
 void clearChannel(int channel)
 {
-	removeIf_([=](const Action& a) { return a.channel == channel; });
+	removeIf_([=](const Action* a) { return a->channel == channel; });
 }
 
 
@@ -189,9 +202,9 @@ void clearChannel(int channel)
 
 void clearAction(int channel, ActionType t)
 {
-	removeIf_([=](const Action& a)
+	removeIf_([=](const Action* a)
 	{ 
-		return a.channel == channel && a.event.getStatus() == static_cast<int>(t);
+		return a->channel == channel && a->event.getStatus() == static_cast<int>(t);
 	});
 }
 
@@ -202,8 +215,8 @@ void clearAction(int channel, ActionType t)
 bool hasActions(int channel)
 {
 	for (auto& kv : actions)
-		for (const Action& action : kv.second)
-			if (action.channel == channel)
+		for (const Action* action : kv.second)
+			if (action->channel == channel)
 				return true;
 	return false;
 }
@@ -222,26 +235,28 @@ void disable()  { active = false; }
 
 const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev)
 {
-	if (!active) return nullptr;
-
-	map<Frame, vector<Action>> temp = actions;
+	ActionMap temp = actions;
 
 	/* If key frame doesn't exist yet, the [] operator in std::map is smart enough 
 	to insert a new item first. Then swap the temp map with the original one. */
 	
-	temp[frame].push_back(Action{ channel, frame, event, nullptr, nullptr });
-
-	trylock_([&](){ actions = temp; });
+	temp[frame].push_back(new Action{ channel, frame, event, nullptr, nullptr });
 	
 	/* Update the curr-next pointers in action, if a previous action has been
 	provided. Cast away the constness of prev: yes, recorder is allowed to do it.
 	Recorder is the sole owner and manager of all actions ;) */
 
-	Action* curr = &actions[frame].back();
+	Action* curr = temp[frame].back();
 	if (prev != nullptr) {
 		const_cast<Action*>(prev)->next = curr;
 		curr->prev = prev;
 	}
+
+//debug_();
+
+	trylock_([&](){ actions = std::move(temp); });
+
+//debug_();
 
 	return curr;
 }
@@ -325,20 +340,37 @@ void shrink(int new_fpb)
 /* -------------------------------------------------------------------------- */
 
 
-const vector<Action>& getActionsOnFrame(Frame frame)
+vector<const Action*> getActionsOnFrame(Frame frame)
 {
-	assert(actions.count(frame) > 0);
-	return actions[frame];
+	assert(false); // TODO - must be implemented
+	vector<const Action*> out;
+	//return actions[frame];
+	return out;
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void forEachAction(std::function<void(const Action&)> f)
+vector<const Action*> getActionsOnChannel(int channel)
+{
+	vector<const Action*> out;
+	forEachAction([&](const Action* a)
+	{
+		if (a->channel == channel)
+			out.push_back(a);
+	});
+	return out;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void forEachAction(std::function<void(const Action*)> f)
 {
 	for (auto& kv : actions)
-		for (const Action& action : kv.second)
+		for (const Action* action : kv.second)
 			f(action);
 }
 }}}; // giada::m::recorder::

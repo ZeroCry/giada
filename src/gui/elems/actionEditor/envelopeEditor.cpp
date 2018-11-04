@@ -86,6 +86,7 @@ void geEnvelopeEditor::draw()
 	Pixel x2 = 0;
 	Pixel y2 = 0;
 
+#if 0
 	/* For each point: 
 		- paint the connecting line with the next one;
 		- reposition it on the y axis, only if there's no point selected (dragged
@@ -94,7 +95,7 @@ void geEnvelopeEditor::draw()
 	for (int i=0; i<children(); i++) {
 		geEnvelopePoint* p = static_cast<geEnvelopePoint*>(child(i));
 		if (m_action == nullptr)
-			p->position(p->x(), valueToY(p->a1.fValue));
+			p->position(p->x(), valueToY(p->a1->event.getVelocity())); // TODO is velocity right?
 		if (i > 0) {
 			x2 = p->x() + side;
 			y2 = p->y() + side;
@@ -103,7 +104,7 @@ void geEnvelopeEditor::draw()
 			y1 = y2;
 		}
 	}
-
+#endif
 	draw_children();
 }
 
@@ -126,7 +127,7 @@ void geEnvelopeEditor::rebuild()
 
 	for (mr::action a : actions) {
 		gu_log("[geEnvelopeEditor::rebuild] Action %d\n", a.frame);
-		add(new geEnvelopePoint(frameToX(a.frame), valueToY(a.fValue), a)); 		
+		//add(new geEnvelopePoint(frameToX(a.frame), valueToY(a.fValue), a)); 		
 	}
 
 	resizable(nullptr);
@@ -188,7 +189,7 @@ void geEnvelopeEditor::onAddAction()
 
 void geEnvelopeEditor::onDeleteAction()  
 {
-	c::recorder::deleteEnvelopeAction(m_ch, m_action->a1, /*moved=*/false);
+	//c::recorder::deleteEnvelopeAction(m_ch, m_action->a1, /*moved=*/false);
 	rebuild();
 }
 
@@ -226,8 +227,8 @@ void geEnvelopeEditor::onRefreshAction()
 {
 	Frame f = m_base->pixelToFrame((m_action->x() - x()) + geEnvelopePoint::SIDE / 2);
 	float v = yToValue(m_action->y() - y());
-	c::recorder::deleteEnvelopeAction(m_ch, m_action->a1, /*moved=*/true);
-	c::recorder::recordEnvelopeAction(m_ch, m_actionType, f, v);
+	//c::recorder::deleteEnvelopeAction(m_ch, m_action->a1, /*moved=*/true);
+	//c::recorder::recordEnvelopeAction(m_ch, m_actionType, f, v);
 	rebuild();
 }
 }} // giada::v::
