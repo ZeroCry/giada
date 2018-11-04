@@ -81,7 +81,7 @@ void trylock_(std::function<void()> f)
 /* optimize
 Removes frames without actions. */
 
-void optimize_(map<Frame, vector<Action*>>& map)
+void optimize_(ActionMap& map)
 {
 	for (auto it = map.cbegin(); it != map.cend();)
 		it->second.size() == 0 ? it = map.erase(it) : ++it;
@@ -200,12 +200,21 @@ void clearChannel(int channel)
 /* -------------------------------------------------------------------------- */
 
 
-void clearAction(int channel, ActionType t)
+void clearActions(int channel, ActionType t)
 {
 	removeIf_([=](const Action* a)
 	{ 
 		return a->channel == channel && a->event.getStatus() == static_cast<int>(t);
 	});
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void deleteAction(const Action* target)
+{
+	removeIf_([=](const Action* a) { return a == target; });
 }
 
 
@@ -340,22 +349,22 @@ void shrink(int new_fpb)
 /* -------------------------------------------------------------------------- */
 
 
-vector<const Action*> getActionsOnFrame(Frame frame)
+vector<Action*> getActionsOnFrame(Frame frame)
 {
-	assert(false); // TODO - must be implemented
-	vector<const Action*> out;
-	//return actions[frame];
-	return out;
+	//assert(false); // TODO - must be implemented
+	//vector<const Action*> out;
+	return actions[frame];
+	//return out;
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-vector<const Action*> getActionsOnChannel(int channel)
+vector<Action*> getActionsOnChannel(int channel)
 {
-	vector<const Action*> out;
-	forEachAction([&](const Action* a)
+	vector<Action*> out;
+	forEachAction([&](Action* a)
 	{
 		if (a->channel == channel)
 			out.push_back(a);
@@ -367,10 +376,10 @@ vector<const Action*> getActionsOnChannel(int channel)
 /* -------------------------------------------------------------------------- */
 
 
-void forEachAction(std::function<void(const Action*)> f)
+void forEachAction(std::function<void(Action*)> f)
 {
 	for (auto& kv : actions)
-		for (const Action* action : kv.second)
+		for (Action* action : kv.second)
 			f(action);
 }
 }}}; // giada::m::recorder::

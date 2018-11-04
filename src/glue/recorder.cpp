@@ -143,7 +143,7 @@ bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b)
 /* -------------------------------------------------------------------------- */
 
 
-void recordMidiAction(int chan, int note, int velocity, int frame_a, int frame_b)
+void recordMidiAction(MidiChannel* ch, int note, int velocity, int frame_a, int frame_b)
 {
 	if (frame_b == 0)
 		frame_b = frame_a + G_DEFAULT_ACTION_SIZE;
@@ -159,8 +159,10 @@ void recordMidiAction(int chan, int note, int velocity, int frame_a, int frame_b
 	m::MidiEvent event_a = m::MidiEvent(m::MidiEvent::NOTE_ON,  note, velocity);
 	m::MidiEvent event_b = m::MidiEvent(m::MidiEvent::NOTE_OFF, note, velocity);
 
-	const m::Action* a = m::recorder::rec(chan, frame_a, event_a, nullptr);
-	const m::Action* b = m::recorder::rec(chan, frame_b, event_b, a);
+	const m::Action* a = m::recorder::rec(ch->index, frame_a, event_a, nullptr);
+	const m::Action* b = m::recorder::rec(ch->index, frame_b, event_b, a);
+
+	ch->hasActions = m::recorder::hasActions(ch->index);
 
 	gu_log("[c::recordMidiAction] record null.a=%d, null.b%d\n", a == nullptr, b == nullptr);
 }
@@ -169,22 +171,22 @@ void recordMidiAction(int chan, int note, int velocity, int frame_a, int frame_b
 /* -------------------------------------------------------------------------- */
 
 
-void deleteMidiAction(MidiChannel* ch, m::recorder_DEPR_::action a1, m::recorder_DEPR_::action a2)
+void deleteMidiAction(MidiChannel* ch, const m::Action* a)
 {
-	m::recorder_DEPR_::deleteAction(ch->index, a1.frame, G_ACTION_MIDI, true,
-		&m::mixer::mutex, a1.iValue, 0.0);
-	
-	/* If action 1 is not orphaned, send a note-off first in case we are deleting 
+	namespace mr = m::recorder;
+
+	/* If action is not orphaned, send a note-off first in case we are deleting 
 	it in a middle of a key_on/key_off sequence. Conversely, orphaned actions
 	should not play, so no need to fire the note-off. */
 	
-	if (a2.frame != -1) {
-		ch->sendMidi(a2.iValue);
-		m::recorder_DEPR_::deleteAction(ch->index, a2.frame, G_ACTION_MIDI, true,
-			&m::mixer::mutex, a2.iValue, 0.0);
+	if (a->next != nullptr) {
+		ch->sendMidi(a->next->event.getRaw());
+		mr::deleteAction(a->next);
 	}
 
-	ch->hasActions = m::recorder_DEPR_::hasActions(ch->index);
+	mr::deleteAction(a);
+
+	ch->hasActions = mr::hasActions(ch->index);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -355,64 +357,9 @@ void setVelocity(const Channel* ch, m::recorder_DEPR_::action a, int value)
 /* -------------------------------------------------------------------------- */
 
 
-vector<const m::Action*> getMidiActions(int chan)
+vector<m::Action*> getMidiActions(int chan)
 {
 	return m::recorder::getActionsOnChannel(chan);
-#if 0
-	vector<m::recorder_DEPR_::Composite> out;
-
-	m::recorder_DEPR_::sortActions();
-
-	for (unsigned i=0; i<m::recorder_DEPR_::frames.size(); i++) {
-
-		if (m::recorder_DEPR_::frames.at(i) > m::clock::getFramesInLoop())
-			continue;
-
-		for (unsigned j=0; j<m::recorder_DEPR_::global.at(i).size(); j++) {
-
-			m::recorder_DEPR_::action* a1 = m::recorder_DEPR_::global.at(i).at(j);
-			m::recorder_DEPR_::action* a2 = nullptr;
-
-			m::MidiEvent a1midi(a1->iValue);
-
-			/* Skip action if:
-				- does not belong to this channel
-				- is not a MIDI action (we only want MIDI things here)
-				- is not a MIDI Note On type. We don't want any other kind of action here */
-
-			if (a1->chan != chan || a1->type != G_ACTION_MIDI || 
-				  a1midi.getStatus() != m::MidiEvent::NOTE_ON)
-				continue;
-
-			/* Prepare the composite action. Action 1 exists for sure, so fill it up
-			right away. */
-
-			m::recorder_DEPR_::Composite cmp;
-			cmp.a1 = *a1;
-
-			/* Search for the next action. Must have: same channel, G_ACTION_MIDI,
-			greater than a1->frame and with MIDI properties of note_off (0x80), same
-			note of a1 and random velocity: we don't care about it (and so we mask it
-			with 0x0000FF00). */
-
-			m::recorder_DEPR_::getNextAction(chan, G_ACTION_MIDI, a1->frame, &a2,
-				m::MidiEvent(m::MidiEvent::NOTE_OFF, a1midi.getNote(), 0x0).getRaw(), 
-				0x0000FF00);
-
-			/* If action 2 has been found, add it to the composite duo. Otherwise
-			set the action 2 frame to -1: it should be intended as "orphaned". */
-
-			if (a2 != nullptr)
-				cmp.a2 = *a2;
-			else
-				cmp.a2.frame = -1;
-
-			out.push_back(cmp);
-		}
-	}
-
-	return out;
-#endif
 }
 
 }}} // giada::c::recorder::

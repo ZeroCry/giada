@@ -125,7 +125,7 @@ void geVelocityEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	vector<const m::Action*> actions = cr::getMidiActions(m_ch->index); 
+	vector<m::Action*> actions = cr::getMidiActions(m_ch->index); 
 	for (const m::Action* action : actions)
 	{
 		if (action->event.getStatus() == m::MidiEvent::NOTE_OFF)

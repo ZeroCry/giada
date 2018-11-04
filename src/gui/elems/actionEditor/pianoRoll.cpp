@@ -221,7 +221,7 @@ void gePianoRoll::onAddAction()
 {
 	Frame frame = m_base->pixelToFrame(Fl::event_x() - x());
 	int   note  = yToNote(Fl::event_y() - y());
-	c::recorder::recordMidiAction(m_ch->index, note, G_MAX_VELOCITY, frame);
+	c::recorder::recordMidiAction(static_cast<MidiChannel*>(m_ch), note, G_MAX_VELOCITY, frame);
 	
 	m_base->rebuild();  // Rebuild velocityEditor as well
 }
@@ -232,7 +232,7 @@ void gePianoRoll::onAddAction()
 
 void gePianoRoll::onDeleteAction()
 {
-	//c::recorder::deleteMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1, m_action->a2);	
+	c::recorder::deleteMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1);	
 	
 	m_base->rebuild();  // Rebuild velocityEditor as well
 }
@@ -288,7 +288,6 @@ void gePianoRoll::onResizeAction()
 
 void gePianoRoll::onRefreshAction()
 {
-#if 0
 	namespace cr = c::recorder;
 
 	if (static_cast<gePianoItem*>(m_action)->orphaned)
@@ -316,6 +315,11 @@ void gePianoRoll::onRefreshAction()
 	assert(f1 != 0 && f2 != 0);
 
 	int note     = yToNote(m_action->y() - y());
+	int velocity = m_action->a1->event.getVelocity();
+
+	// TODO cr::updateMidiAction();
+#if 0
+	int note     = yToNote(m_action->y() - y());
 	int velocity = m::MidiEvent(m_action->a1.iValue).getVelocity();
 
 	/* TODO - less then optimal. Let's wait for recorder refactoring... */
@@ -326,9 +330,9 @@ void gePianoRoll::onRefreshAction()
 		cr::recordMidiAction(m_ch->index, note, velocity, f1, f2);
 	else
 		cr::recordMidiAction(m_ch->index, oldNote, velocity, m_action->a1.frame, m_action->a2.frame);
+#endif
 
 	m_base->rebuild();  // Rebuild velocityEditor as well
-#endif
 }
 
 
@@ -367,7 +371,7 @@ void gePianoRoll::rebuild()
 	clear();
 	size(m_base->fullWidth, (MAX_KEYS + 1) * CELL_H);
 
-	vector<const m::Action*> actions = cr::getMidiActions(m_ch->index); 
+	vector<m::Action*> actions = cr::getMidiActions(m_ch->index); 
 	for (const m::Action* action : actions)
 	{
 		if (action->event.getStatus() == m::MidiEvent::NOTE_OFF)

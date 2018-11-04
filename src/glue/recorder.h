@@ -38,12 +38,12 @@ class MidiChannel;
 class geChannel;
 
 
-namespace giada { namespace m {
-class Action;
-}}
-
 namespace giada {
-namespace c     {
+namespace m
+{
+class Action;
+}
+namespace c {
 namespace recorder 
 {
 void clearAllActions(geChannel* gch);
@@ -62,19 +62,21 @@ bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b);
 Records a new MIDI action at frame_a. If frame_b == 0, uses the default action
 size. This function is designed for the Piano Roll (not for live recording). */
 
-void recordMidiAction(int chan, int note, int velocity, int frame_a, int frame_b=0);
+void recordMidiAction(MidiChannel* ch, int note, int velocity, int frame_a, int frame_b=0);
+
+void deleteMidiAction(MidiChannel* ch, const m::Action* a);
+
+/* getMidiActions
+Returns a list of Composite actions, ready to be displayed in a MIDI note
+editor as pairs of NoteOn+NoteOff. */
+
+std::vector<m::Action*> getMidiActions(int channel);
 
 void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue);
 
 void recordSampleAction(SampleChannel* ch, int type, int frame_a, int frame_b=0);
 
 void setVelocity(const Channel* ch, m::recorder_DEPR_::action a, int value);
-
-/* getMidiActions
-Returns a list of Composite actions, ready to be displayed in a MIDI note
-editor as pairs of NoteOn+NoteOff. */
-
-std::vector<const m::Action*> getMidiActions(int channel);
 
 std::vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type);
 
@@ -84,8 +86,6 @@ Editor. If actions are not keypress+keyrelease combos, the second action in
 the Composite struct if left empty (with action2.frame = -1). */
 
 std::vector<m::recorder_DEPR_::Composite> getSampleActions(const SampleChannel* ch);
-
-void deleteMidiAction(MidiChannel* ch, m::recorder_DEPR_::action a1, m::recorder_DEPR_::action a2);
 
 void deleteSampleAction(SampleChannel* ch, m::recorder_DEPR_::action a1,
 	m::recorder_DEPR_::action a2);
