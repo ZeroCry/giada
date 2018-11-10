@@ -274,6 +274,17 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev)
 /* -------------------------------------------------------------------------- */
 
 
+bool canFit(int channel, MidiEvent e, Frame f1, Frame f2)
+{
+	// TODO
+	assert(false);
+	return true;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 void updateBpm(float oldval, float newval, int oldquanto)
 {
 	updateKeyFrames_([=](Frame old) 
@@ -351,10 +362,7 @@ void shrink(int new_fpb)
 
 vector<Action*> getActionsOnFrame(Frame frame)
 {
-	//assert(false); // TODO - must be implemented
-	//vector<const Action*> out;
 	return actions[frame];
-	//return out;
 }
 
 

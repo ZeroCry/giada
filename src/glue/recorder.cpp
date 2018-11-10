@@ -143,24 +143,24 @@ bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b)
 /* -------------------------------------------------------------------------- */
 
 
-void recordMidiAction(MidiChannel* ch, int note, int velocity, int frame_a, int frame_b)
+void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f2)
 {
-	if (frame_b == 0)
-		frame_b = frame_a + G_DEFAULT_ACTION_SIZE;
+	if (f2 == 0)
+		f2 = f1 + G_DEFAULT_ACTION_SIZE;
 
 	/* Avoid frame overflow. */
 
-	int overflow = frame_b - (m::clock::getFramesInLoop());
+	int overflow = f2 - (m::clock::getFramesInLoop());
 	if (overflow > 0) {
-		frame_b -= overflow;
-		frame_a -= overflow;
+		f2 -= overflow;
+		f1 -= overflow;
 	}
 
-	m::MidiEvent event_a = m::MidiEvent(m::MidiEvent::NOTE_ON,  note, velocity);
-	m::MidiEvent event_b = m::MidiEvent(m::MidiEvent::NOTE_OFF, note, velocity);
+	m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::NOTE_ON,  note, velocity);
+	m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::NOTE_OFF, note, velocity);
 
-	const m::Action* a = m::recorder::rec(ch->index, frame_a, event_a, nullptr);
-	const m::Action* b = m::recorder::rec(ch->index, frame_b, event_b, a);
+	const m::Action* a = m::recorder::rec(ch->index, f1, e1, nullptr);
+	const m::Action* b = m::recorder::rec(ch->index, f2, e2, a);
 
 	ch->hasActions = m::recorder::hasActions(ch->index);
 
@@ -188,6 +188,24 @@ void deleteMidiAction(MidiChannel* ch, const m::Action* a)
 
 	ch->hasActions = mr::hasActions(ch->index);
 }
+
+/* -------------------------------------------------------------------------- */
+
+
+void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocity, 
+	Frame f1, Frame f2)
+{
+	namespace mr = m::recorder;
+
+	//if (!::canFit())
+	//	return; 
+
+	mr::deleteAction(a->next);
+	mr::deleteAction(a);
+	
+	recordMidiAction(ch, note, velocity, f1, f2);
+}
+
 
 /* -------------------------------------------------------------------------- */
 

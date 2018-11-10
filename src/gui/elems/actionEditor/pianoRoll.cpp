@@ -317,20 +317,8 @@ void gePianoRoll::onRefreshAction()
 	int note     = yToNote(m_action->y() - y());
 	int velocity = m_action->a1->event.getVelocity();
 
-	// TODO cr::updateMidiAction();
-#if 0
-	int note     = yToNote(m_action->y() - y());
-	int velocity = m::MidiEvent(m_action->a1.iValue).getVelocity();
-
-	/* TODO - less then optimal. Let's wait for recorder refactoring... */
-	
-	int oldNote  = m::MidiEvent(m_action->a1.iValue).getNote();
-	cr::deleteMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1, m_action->a2);	
-	if (cr::midiActionCanFit(m_ch->index, note, f1, f2))
-		cr::recordMidiAction(m_ch->index, note, velocity, f1, f2);
-	else
-		cr::recordMidiAction(m_ch->index, oldNote, velocity, m_action->a1.frame, m_action->a2.frame);
-#endif
+	cr::updateMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1, note, 
+		velocity, f1, f2);
 
 	m_base->rebuild();  // Rebuild velocityEditor as well
 }

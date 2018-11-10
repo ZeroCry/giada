@@ -88,6 +88,12 @@ Records an action. */
 
 const Action* rec(int channel, Frame frame, MidiEvent e, const Action* prev);
 
+/* canFit
+Tells if the action can fit the current layout. Call this before recording a 
+new action. */
+
+bool canFit(int channel, MidiEvent e, Frame f1, Frame f2=0);
+
 /* forEachAction
 Applies a read-only callback on each action recorded. */
 

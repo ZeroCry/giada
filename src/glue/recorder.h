@@ -62,9 +62,12 @@ bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b);
 Records a new MIDI action at frame_a. If frame_b == 0, uses the default action
 size. This function is designed for the Piano Roll (not for live recording). */
 
-void recordMidiAction(MidiChannel* ch, int note, int velocity, int frame_a, int frame_b=0);
+void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f2=0);
 
 void deleteMidiAction(MidiChannel* ch, const m::Action* a);
+
+void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocity, 
+    Frame f1, Frame f2);
 
 /* getMidiActions
 Returns a list of Composite actions, ready to be displayed in a MIDI note
