@@ -375,7 +375,7 @@ void setVelocity(const Channel* ch, m::recorder_DEPR_::action a, int value)
 /* -------------------------------------------------------------------------- */
 
 
-vector<m::Action*> getMidiActions(int chan)
+vector<const m::Action*> getMidiActions(int chan)
 {
 	return m::recorder::getActionsOnChannel(chan);
 }

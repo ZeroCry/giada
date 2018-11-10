@@ -44,7 +44,7 @@ namespace giada {
 namespace m {
 namespace recorder
 {
-using ActionMap = map<Frame, vector<Action*>>;
+using ActionMap = map<Frame, vector<const Action*>>;
 
 namespace
 {
@@ -141,8 +141,8 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 		to keep the original references. */
 
 		temp[frame] = std::move(kv.second);
-		for (Action* action : temp[frame])
-			action->frame = frame;
+		for (const Action* action : temp[frame])
+			const_cast<Action*>(action)->frame = frame;
 	}
 
 	trylock_([&](){ actions = std::move(temp); });
@@ -255,10 +255,10 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev)
 	provided. Cast away the constness of prev: yes, recorder is allowed to do it.
 	Recorder is the sole owner and manager of all actions ;) */
 
-	Action* curr = temp[frame].back();
+	const Action* curr = temp[frame].back();
 	if (prev != nullptr) {
 		const_cast<Action*>(prev)->next = curr;
-		curr->prev = prev;
+		const_cast<Action*>(curr)->prev = prev;
 	}
 
 //debug_();
@@ -360,7 +360,7 @@ void shrink(int new_fpb)
 /* -------------------------------------------------------------------------- */
 
 
-vector<Action*> getActionsOnFrame(Frame frame)
+vector<const Action*> getActionsOnFrame(Frame frame)
 {
 	return actions[frame];
 }
@@ -369,10 +369,10 @@ vector<Action*> getActionsOnFrame(Frame frame)
 /* -------------------------------------------------------------------------- */
 
 
-vector<Action*> getActionsOnChannel(int channel)
+vector<const Action*> getActionsOnChannel(int channel)
 {
-	vector<Action*> out;
-	forEachAction([&](Action* a)
+	vector<const Action*> out;
+	forEachAction([&](const Action* a)
 	{
 		if (a->channel == channel)
 			out.push_back(a);
@@ -384,10 +384,10 @@ vector<Action*> getActionsOnChannel(int channel)
 /* -------------------------------------------------------------------------- */
 
 
-void forEachAction(std::function<void(Action*)> f)
+void forEachAction(std::function<void(const Action*)> f)
 {
 	for (auto& kv : actions)
-		for (Action* action : kv.second)
+		for (const Action* action : kv.second)
 			f(action);
 }
 }}}; // giada::m::recorder::

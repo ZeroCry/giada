@@ -97,7 +97,7 @@ bool canFit(int channel, MidiEvent e, Frame f1, Frame f2=0);
 /* forEachAction
 Applies a read-only callback on each action recorded. */
 
-void forEachAction(std::function<void(Action*)> f);
+void forEachAction(std::function<void(const Action*)> f);
 
 /* updateBpm
 Changes actions position by calculating the new bpm value. */
@@ -114,9 +114,9 @@ void updateSamplerate(int systemRate, int patchRate);
 void expand(int old_fpb, int new_fpb);
 void shrink(int new_fpb);
 
-std::vector<Action*> getActionsOnFrame(Frame frame);
+std::vector<const Action*> getActionsOnFrame(Frame f);
 
-std::vector<Action*> getActionsOnChannel(int channel);
+std::vector<const Action*> getActionsOnChannel(int channel);
 
 }}}; // giada::m::recorder::
 
