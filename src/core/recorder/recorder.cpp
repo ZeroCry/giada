@@ -113,7 +113,7 @@ void removeIf_(std::function<bool(const Action*)> f)
 	}
 	optimize_(temp);
 
-	trylock_([&](){ actions = temp; }); // TODO - or std::move(temp)?
+	trylock_([&](){ actions = std::move(temp); });
 }
 
 
