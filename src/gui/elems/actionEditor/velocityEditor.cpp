@@ -131,7 +131,7 @@ void geVelocityEditor::rebuild()
 		
 		gu_log("[geVelocityEditor::rebuild] f=%d\n", action->frame);
 
-		Pixel px = x() + m_base->frameToPixel(action->event.getVelocity());
+		Pixel px = x() + m_base->frameToPixel(action->frame);
 		Pixel py = y() + valueToY(action->event.getVelocity());
 
 		add(new geEnvelopePoint(px, py, action));

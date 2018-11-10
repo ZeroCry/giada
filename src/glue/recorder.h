@@ -55,7 +55,6 @@ void clearStartStopActions(geChannel* gch);
 /* MOVE ALL THESE FUNCTIONS TO c::actionEditor*/
 
 
-bool midiActionCanFit(int chan, int note, int frame_a, int frame_b);
 bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b);
 
 /* recordMidiAction
@@ -73,6 +72,9 @@ void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocit
 Returns a vector of actions, ready to be displayed in a MIDI note editor. */
 
 std::vector<const m::Action*> getMidiActions(MidiChannel* ch);
+
+
+
 
 void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue);
 

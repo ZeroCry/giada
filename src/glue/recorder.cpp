@@ -108,24 +108,6 @@ void clearStartStopActions(geChannel* gch)
 /* -------------------------------------------------------------------------- */
 
 
-bool midiActionCanFit(int chan, int note, int frame_a, int frame_b)
-{
- 	assert(false); // TODO 
-
- #if 0
-	namespace mr = m::recorder_DEPR_;
-
-	/* TODO - This is insane, to say the least. Let's wait for recorder refactoring... */
-
-	vector<mr::Composite> comps = getMidiActions(chan);
-	for (mr::Composite c : comps)
-    if (frame_b >= c.a1.frame && c.a2.frame >= frame_a && m::MidiEvent(c.a1.iValue).getNote() == note)
-			return false;
-	return true;
-#endif
-}
-
-
 bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b)
 {
 	namespace mr = m::recorder_DEPR_;
