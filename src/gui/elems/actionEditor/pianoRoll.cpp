@@ -350,7 +350,6 @@ Pixel gePianoRoll::snapToY(Pixel p) const
 
 void gePianoRoll::rebuild()
 {
-	namespace mr = m::recorder_DEPR_;
 	namespace cr = c::recorder;
 
 	/* Remove all existing actions and set a new width, according to the current
@@ -359,8 +358,7 @@ void gePianoRoll::rebuild()
 	clear();
 	size(m_base->fullWidth, (MAX_KEYS + 1) * CELL_H);
 
-	vector<const m::Action*> actions = cr::getMidiActions(m_ch->index); 
-	for (const m::Action* action : actions)
+	for (const m::Action* action : cr::getMidiActions(static_cast<MidiChannel*>(m_ch)))
 	{
 		if (action->event.getStatus() == m::MidiEvent::NOTE_OFF)
 			continue;

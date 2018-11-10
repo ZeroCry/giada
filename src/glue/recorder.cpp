@@ -143,6 +143,15 @@ bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b)
 /* -------------------------------------------------------------------------- */
 
 
+vector<const m::Action*> getMidiActions(MidiChannel* ch)
+{
+	return m::recorder::getActionsOnChannel(ch->index);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f2)
 {
 	if (f2 == 0)
@@ -369,15 +378,6 @@ void setVelocity(const Channel* ch, m::recorder_DEPR_::action a, int value)
 	m::recorder_DEPR_::deleteAction(ch->index, a.frame, G_ACTION_MIDI, true,
 		&m::mixer::mutex, a.iValue, 0.0);
 	m::recorder_DEPR_::rec(ch->index, G_ACTION_MIDI, a.frame, event.getRaw());
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-vector<const m::Action*> getMidiActions(int chan)
-{
-	return m::recorder::getActionsOnChannel(chan);
 }
 
 }}} // giada::c::recorder::

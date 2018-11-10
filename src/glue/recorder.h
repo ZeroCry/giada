@@ -70,10 +70,9 @@ void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocit
     Frame f1, Frame f2);
 
 /* getMidiActions
-Returns a list of Composite actions, ready to be displayed in a MIDI note
-editor as pairs of NoteOn+NoteOff. */
+Returns a vector of actions, ready to be displayed in a MIDI note editor. */
 
-std::vector<const m::Action*> getMidiActions(int channel);
+std::vector<const m::Action*> getMidiActions(MidiChannel* ch);
 
 void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue);
 

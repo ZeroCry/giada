@@ -116,7 +116,6 @@ int geVelocityEditor::yToValue(Pixel px) const
 
 void geVelocityEditor::rebuild()
 {
-	namespace mr = m::recorder_DEPR_;
 	namespace cr = c::recorder;
 
 	/* Remove all existing actions and set a new width, according to the current
@@ -125,8 +124,7 @@ void geVelocityEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	vector<const m::Action*> actions = cr::getMidiActions(m_ch->index); 
-	for (const m::Action* action : actions)
+	for (const m::Action* action : cr::getMidiActions(static_cast<MidiChannel*>(m_ch)))
 	{
 		if (action->event.getStatus() == m::MidiEvent::NOTE_OFF)
 			continue;
