@@ -54,9 +54,6 @@ void clearStartStopActions(geChannel* gch);
 
 /* MOVE ALL THESE FUNCTIONS TO c::actionEditor*/
 
-
-bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b);
-
 /* recordMidiAction
 Records a new MIDI action at frame_a. If frame_b == 0, uses the default action
 size. This function is designed for the Piano Roll (not for live recording). */
@@ -71,7 +68,7 @@ void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocit
 /* getMidiActions
 Returns a vector of actions, ready to be displayed in a MIDI note editor. */
 
-std::vector<const m::Action*> getMidiActions(MidiChannel* ch);
+std::vector<const m::Action*> getMidiActions(const MidiChannel* ch);
 
 void updateVelocity(const MidiChannel* ch, const m::Action* a, int value);
 
@@ -79,16 +76,19 @@ void updateVelocity(const MidiChannel* ch, const m::Action* a, int value);
 
 void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue);
 
-void recordSampleAction(SampleChannel* ch, int type, int frame_a, int frame_b=0);
-
-std::vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type);
+void recordSampleAction(const SampleChannel* ch, int type, Frame f1, Frame f2=0);
 
 /* getSampleActions
 Returns a list of Composite actions, ready to be displayed in a Sample Action
 Editor. If actions are not keypress+keyrelease combos, the second action in
 the Composite struct if left empty (with action2.frame = -1). */
 
-std::vector<m::recorder_DEPR_::Composite> getSampleActions(const SampleChannel* ch);
+std::vector<const m::Action*> getSampleActions(const SampleChannel* ch);
+
+
+std::vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type);
+
+
 
 void deleteSampleAction(SampleChannel* ch, m::recorder_DEPR_::action a1,
 	m::recorder_DEPR_::action a2);

@@ -27,6 +27,7 @@
 
 #include <FL/fl_draw.H>
 #include "../../../core/const.h"
+#include "../../../core/action.h"
 #include "../../../core/sampleChannel.h"
 #include "sampleAction.h"
 
@@ -53,18 +54,16 @@ void geSampleAction::draw()
 		fl_rectf(x(), y(), w(), h(), color);
 	}
 	else {
-#if 0
-		if (a1.type == G_ACTION_KILL)
+		if (a1->event.getStatus() == m::MidiEvent::NOTE_KILL)
 			fl_rect(x(), y(), MIN_WIDTH, h(), color);
 		else {
 			fl_rectf(x(), y(), MIN_WIDTH, h(), color);
-			if (a1.type == G_ACTION_KEYPRESS)
+			if (a1->event.getStatus() == m::MidiEvent::NOTE_ON)
 				fl_rectf(x()+3, y()+h()-11, w()-6, 8, G_COLOR_GREY_4);
 			else
-			if (a1.type == G_ACTION_KEYREL)
+			if (a1->event.getStatus() == m::MidiEvent::NOTE_OFF)
 				fl_rectf(x()+3, y()+3, w()-6, 8, G_COLOR_GREY_4);
 		}
-#endif
 	}
 }
 }} // giada::v::

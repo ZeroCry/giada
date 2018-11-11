@@ -164,13 +164,13 @@ void gdBaseActionEditor::centerViewportOut()
 int gdBaseActionEditor::getActionType() const
 {
 	if (actionType->value() == 0)
-		return G_ACTION_KEYPRESS;
+		return m::MidiEvent::NOTE_ON;
 	else
 	if (actionType->value() == 1)
-		return G_ACTION_KEYREL;
+		return m::MidiEvent::NOTE_OFF;
 	else
 	if (actionType->value() == 2)
-		return G_ACTION_KILL;
+		return m::MidiEvent::NOTE_KILL;
 
 	assert(false);
 	return -1;

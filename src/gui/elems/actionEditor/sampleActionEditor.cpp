@@ -27,6 +27,7 @@
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
+#include "../../../core/recorder/recorder.h"
 #include "../../../core/const.h"
 #include "../../../core/conf.h"
 #include "../../../core/action.h"
@@ -65,7 +66,7 @@ geSampleActionEditor::~geSampleActionEditor()
 
 void geSampleActionEditor::rebuild()
 {
-	namespace mr = m::recorder_DEPR_;
+	namespace mr = m::recorder;
 	namespace cr = c::recorder;
 
 	const SampleChannel* ch = static_cast<const SampleChannel*>(m_ch);
@@ -76,21 +77,24 @@ void geSampleActionEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	vector<mr::Composite> comps = cr::getSampleActions(ch);
+	for (const m::Action* action : cr::getSampleActions(ch)) {
 
-	for (mr::Composite comp : comps) {
+		const m::Action* a1 = action;
+		const m::Action* a2 = action->next;
+
 		gu_log("[geSampleActionEditor::rebuild] Action [%d, %d)\n", 
-			comp.a1.frame, comp.a2.frame);
-		Pixel px = x() + m_base->frameToPixel(comp.a1.frame);
+			a1->frame, a2 == nullptr ? -1 : a2->frame);
+
+		Pixel px = x() + m_base->frameToPixel(a1->frame);
 		Pixel py = y() + 4;
 		Pixel pw = 0;
 		Pixel ph = h() - 8;
-		if (comp.a2.frame != -1)
-				pw = m_base->frameToPixel(comp.a2.frame - comp.a1.frame);
+		if (a2 != nullptr)
+			pw = m_base->frameToPixel(a2->frame - a1->frame);
 
-		//geSampleAction* a = new geSampleAction(px, py, pw, ph, ch, comp.a1, comp.a2);
-		//add(a);
-		//resizable(a);
+		geSampleAction* a = new geSampleAction(px, py, pw, ph, ch, a1, a2);
+		add(a);
+		resizable(a);
 	}
 
 	/* If channel is LOOP_ANY, deactivate it: a loop mode channel cannot hold 

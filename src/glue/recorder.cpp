@@ -108,24 +108,7 @@ void clearStartStopActions(geChannel* gch)
 /* -------------------------------------------------------------------------- */
 
 
-bool sampleActionCanFit(const SampleChannel* ch, int frame_a, int frame_b)
-{
-	namespace mr = m::recorder_DEPR_;
-
-	/* TODO - Even more insanity... Let's wait for recorder refactoring... */
-
-	vector<mr::Composite> comps = getSampleActions(ch);
-	for (mr::Composite c : comps)
-    if (frame_b >= c.a1.frame && c.a2.frame >= frame_a)
-			return false;
-	return true;
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-vector<const m::Action*> getMidiActions(MidiChannel* ch)
+vector<const m::Action*> getMidiActions(const MidiChannel* ch)
 {
 	return m::recorder::getActionsOnChannel(ch->index);
 }
@@ -201,15 +184,21 @@ void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocit
 /* -------------------------------------------------------------------------- */
 
 
-void recordSampleAction(SampleChannel* ch, int type, int frame_a, int frame_b)
+void recordSampleAction(const SampleChannel* ch, int type, Frame f1, Frame f2)
 {
+	namespace mr = m::recorder;
+	
 	if (ch->mode == ChannelMode::SINGLE_PRESS) {
-		m::recorder_DEPR_::rec(ch->index, G_ACTION_KEYPRESS, frame_a);
-		m::recorder_DEPR_::rec(ch->index, G_ACTION_KEYREL, frame_b == 0 ? frame_a + G_DEFAULT_ACTION_SIZE : frame_b);
+		m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::NOTE_ON, 0, 0);
+		m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::NOTE_OFF, 0, 0);
+		const m::Action* a = mr::rec(ch->index, f1, e1, nullptr);
+		const m::Action* b = mr::rec(ch->index, f2 == 0 ? f1 + G_DEFAULT_ACTION_SIZE : f2, e2, a);
 	}
-	else
-		m::recorder_DEPR_::rec(ch->index, type, frame_a);
-
+	else {
+		m::MidiEvent e1 = m::MidiEvent(type, 0, 0);
+		mr::rec(ch->index, f1, e1, nullptr);
+	}
+	
 	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
@@ -274,45 +263,9 @@ void deleteSampleAction(SampleChannel* ch, m::recorder_DEPR_::action a1,
 /* -------------------------------------------------------------------------- */
 
 
-vector<m::recorder_DEPR_::Composite> getSampleActions(const SampleChannel* ch)
+vector<const m::Action*> getSampleActions(const SampleChannel* ch)
 {
-	namespace mr = m::recorder_DEPR_;
-
-	vector<mr::Composite> out;
-
-	mr::sortActions();
-	mr::forEachAction([&](const mr::action* a1)
-	{
-		/* Exclude:
-		- actions beyond clock::getFramesInLoop();
-		- actions that don't belong to channel ch;
-		- actions != G_ACTION_KEYPRESS, G_ACTION_KEYREL or G_ACTION_KILL;
-		- G_ACTION_KEYREL actions in a SINGLE_PRESS context. */
-
-		if (a1->frame > m::clock::getFramesInLoop() || 
-			  a1->chan != ch->index                   || 
-			  a1->type & ~(G_ACTION_KEYPRESS | G_ACTION_KEYREL | G_ACTION_KILL) || 
-			  (ch->mode == ChannelMode::SINGLE_PRESS && a1->type == G_ACTION_KEYREL))
-			return;
-
-		mr::Composite cmp; 
-		cmp.a1 = *a1;
-		cmp.a2.frame = -1;
-
-		/* If SINGLE_PRESS mode and the current action is G_ACTION_KEYPRESS, let's
-		fetch the corresponding G_ACTION_KEYREL. */
-
-		if (ch->mode == ChannelMode::SINGLE_PRESS && a1->type == G_ACTION_KEYPRESS) {
-			m::recorder_DEPR_::action* a2 = nullptr;
-			mr::getNextAction(ch->index, G_ACTION_KEYREL, a1->frame, &a2);
-			if (a2 != nullptr)
-				cmp.a2 = *a2;
-		}
-
-		out.push_back(cmp);
-	});
-
-	return out;
+	return m::recorder::getActionsOnChannel(ch->index);
 }
 
 
