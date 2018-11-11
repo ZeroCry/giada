@@ -40,7 +40,10 @@ class Channel;
 
 
 namespace giada {
-namespace m {
+namespace m
+{
+class Action;
+
 namespace mixer
 {
 struct FrameEvents
@@ -51,7 +54,7 @@ struct FrameEvents
 	bool  onBar;
 	bool  onFirstBeat;
 	bool  quantoPassed;
-	std::vector<recorder_DEPR_::action*> actions;
+	std::vector<const Action*> actions;
 };
 
 extern std::vector<Channel*> channels;

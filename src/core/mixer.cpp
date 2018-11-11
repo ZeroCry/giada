@@ -32,6 +32,7 @@
 #include "wave.h"
 #include "kernelAudio.h"
 #include "recorder.h"
+#include "recorder/recorder.h"
 #include "pluginHost.h"
 #include "conf.h"
 #include "mixerHandler.h"
@@ -41,6 +42,7 @@
 #include "sampleChannel.h"
 #include "midiChannel.h"
 #include "audioBuffer.h"
+#include "action.h"
 #include "mixer.h"
 
 
@@ -365,7 +367,7 @@ int masterPlay(void* outBuf, void* inBuf, unsigned bufferSize,
 			fe.onBar        = clock::isOnBar();
 			fe.onFirstBeat  = clock::isOnFirstBeat();
 			fe.quantoPassed = clock::quantoHasPassed();
-			fe.actions      = recorder_DEPR_::getActionsOnFrame(clock::getCurrentFrame());
+			fe.actions      = recorder::getActionsOnFrame(clock::getCurrentFrame());
 
 			for (Channel* channel : channels)
 				channel->parseEvents(fe);

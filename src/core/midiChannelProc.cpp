@@ -2,6 +2,7 @@
 #include "pluginHost.h"
 #include "kernelMidi.h"
 #include "const.h"
+#include "action.h"
 #include "midiChannelProc.h"
 
 
@@ -28,13 +29,16 @@ void onFirstBeat_(MidiChannel* ch)
 /* -------------------------------------------------------------------------- */
 
 
-void parseAction_(MidiChannel* ch, const recorder_DEPR_::action* a, int localFrame)
+void parseAction_(MidiChannel* ch, const Action* a, int localFrame)
 {
 	if (ch->isPlaying() && !ch->mute) {
-		if (ch->midiOut)
-			kernelMidi::send(a->iValue | MIDI_CHANS[ch->midiOutChan]);
+		if (ch->midiOut) {
+			MidiEvent event = a->event;
+			event.setChannel(ch->midiOutChan);
+			kernelMidi::send(event.getRaw());
+		}
 #ifdef WITH_VST
-		ch->addVstMidiEvent(a->iValue, localFrame);
+		ch->addVstMidiEvent(a->event.getRaw(), localFrame);
 #endif
 	}
 }
@@ -51,8 +55,8 @@ void parseEvents(MidiChannel* ch, mixer::FrameEvents fe)
 {
 	if (fe.onFirstBeat)
 		onFirstBeat_(ch);
-	for (const recorder_DEPR_::action* action : fe.actions)
-		if (action->chan == ch->index && action->type == G_ACTION_MIDI)
+	for (const Action* action : fe.actions)
+		if (action->channel == ch->index /*&& action->type == G_ACTION_MIDI*/)
 			parseAction_(ch, action, fe.frameLocal);
 }
 

@@ -29,6 +29,7 @@
 #include "const.h"
 #include "conf.h"
 #include "clock.h"
+#include "action.h"
 #include "kernelAudio.h"
 #include "sampleChannel.h"
 #include "sampleChannelRec.h"
@@ -113,14 +114,13 @@ void calcVolumeEnv_(SampleChannel* ch, int globalFrame)
 /* -------------------------------------------------------------------------- */
 
 
-void parseAction_(SampleChannel* ch, const recorder_DEPR_::action* a, int localFrame,
-	int globalFrame)
+void parseAction_(SampleChannel* ch, const Action* a, int localFrame, int globalFrame)
 {
 	if (!ch->readActions)
 		return;
 
-	switch (a->type) {
-		case G_ACTION_KEYPRESS:
+	switch (a->event.getStatus()) {
+		case MidiEvent::NOTE_ON:
 			if (ch->isAnySingleMode()) {
 				ch->start(localFrame, false, 0);
 				/* This is not a user-generated event, so fill the first chunk of buffer. 
@@ -130,15 +130,15 @@ void parseAction_(SampleChannel* ch, const recorder_DEPR_::action* a, int localF
 					ch->tracker += ch->fillBuffer(ch->buffer, ch->tracker, localFrame);
 			}
 			break;
-		case G_ACTION_KEYREL:
+		case MidiEvent::NOTE_OFF:
 			if (ch->isAnySingleMode())
 				ch->stop();
 			break;
-		case G_ACTION_KILL:
+		case MidiEvent::NOTE_KILL:
 			if (ch->isAnySingleMode())
 				ch->kill(localFrame);
 			break;
-		case G_ACTION_VOLUME:
+		case MidiEvent::ENVELOPE:
 			calcVolumeEnv_(ch, globalFrame);
 			break;
 	}
@@ -191,8 +191,8 @@ void parseEvents(SampleChannel* ch, mixer::FrameEvents fe)
 	quantize_(ch, fe.quantoPassed);
 	if (fe.onFirstBeat)
 		onFirstBeat_(ch, conf::recsStopOnChanHalt);
-	for (const recorder_DEPR_::action* action : fe.actions)
-		if (action->chan == ch->index)
+	for (const Action* action : fe.actions)
+		if (action->channel == ch->index)
 			parseAction_(ch, action, fe.frameLocal, fe.frameGlobal);
 }
 
