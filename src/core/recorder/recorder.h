@@ -70,6 +70,11 @@ Deletes a specific action. */
 
 void deleteAction(const Action* a);
 
+/* updateEvent
+Changes the event in action 'a'. */
+
+void updateEvent(const Action* a, MidiEvent e);
+
 /* hasActions
 Checks if the channel has at least one action recorded. */
 

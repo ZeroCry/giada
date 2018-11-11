@@ -221,6 +221,16 @@ void deleteAction(const Action* target)
 /* -------------------------------------------------------------------------- */
 
 
+void updateEvent(const Action* a, MidiEvent e)
+{
+	assert(a != nullptr);
+	const_cast<Action*>(a)->event = e;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 bool hasActions(int channel)
 {
 	for (auto& kv : actions)

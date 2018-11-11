@@ -348,18 +348,14 @@ vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type
 /* -------------------------------------------------------------------------- */
 
 
-void setVelocity(const Channel* ch, m::recorder_DEPR_::action a, int value)
+void updateVelocity(const MidiChannel* ch, const m::Action* a, int value)
 {
-	/* TODO - this is super ugly: delete the action and add a new one with the
-	modified values. This shit will go away as soon as we'll refactor m::recorder
-	for good. */
-
-	m::MidiEvent event = m::MidiEvent(a.iValue);
+	namespace mr = m::recorder;
+	
+	m::MidiEvent event(a->event);
 	event.setVelocity(value);
 
-	m::recorder_DEPR_::deleteAction(ch->index, a.frame, G_ACTION_MIDI, true,
-		&m::mixer::mutex, a.iValue, 0.0);
-	m::recorder_DEPR_::rec(ch->index, G_ACTION_MIDI, a.frame, event.getRaw());
+	mr::updateEvent(a, event);
 }
 
 }}} // giada::c::recorder::

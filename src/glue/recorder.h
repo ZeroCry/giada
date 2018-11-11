@@ -73,14 +73,13 @@ Returns a vector of actions, ready to be displayed in a MIDI note editor. */
 
 std::vector<const m::Action*> getMidiActions(MidiChannel* ch);
 
+void updateVelocity(const MidiChannel* ch, const m::Action* a, int value);
 
 
 
 void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue);
 
 void recordSampleAction(SampleChannel* ch, int type, int frame_a, int frame_b=0);
-
-void setVelocity(const Channel* ch, m::recorder_DEPR_::action a, int value);
 
 std::vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type);
 
