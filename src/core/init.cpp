@@ -81,6 +81,7 @@ void videoThreadCallback_()
 			gu_refreshUI();
 			u::time::sleep(G_GUI_REFRESH_RATE);
 		}
+	puts("VIDEO THREAD STOPPED");
 }
 
 
@@ -177,10 +178,6 @@ void initGUI_(int argc, char** argv)
 	gu_updateControls();
 	
 	videoThread = std::thread(videoThreadCallback_);
-
-#ifdef WITH_VST
-	juce::initialiseJuce_GUI();
-#endif
 }
 
 
@@ -216,10 +213,6 @@ void shutdownGUI_()
 
 	gu_closeAllSubwindows();
 	gu_log("[init] all subwindows closed\n");
-
-#ifdef WITH_VST
-	juce::shutdownJuce_GUI();
-#endif
 
 	videoThread.join();	
 }
