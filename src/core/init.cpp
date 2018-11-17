@@ -81,7 +81,6 @@ void videoThreadCallback_()
 			gu_refreshUI();
 			u::time::sleep(G_GUI_REFRESH_RATE);
 		}
-	puts("VIDEO THREAD STOPPED");
 }
 
 

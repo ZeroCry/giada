@@ -312,7 +312,7 @@ void gePianoRoll::onRefreshAction()
 		f2 = m_base->pixelToFrame(p2);
 	}
 
-	assert(f1 != 0 && f2 != 0);
+	assert(f2 != 0);
 
 	int note     = yToNote(m_action->y() - y());
 	int velocity = m_action->a1->event.getVelocity();
@@ -366,12 +366,14 @@ void gePianoRoll::rebuild()
 		const m::Action* a1 = action;
 		const m::Action* a2 = action->next;
 
-		assert(a1 != nullptr && a2 != nullptr);
-
-		gu_log("[gePianoRoll::rebuild] ((0x%X, 0x%X, f=%d) - (0x%X, 0x%X, f=%d))\n", 
+		gu_log("[gePianoRoll::rebuild] (%p (0x%X, 0x%X, f=%d) - %p (0x%X, 0x%X, f=%d))\n", 
+			(void*) a1, 
 			a1->event.getStatus(), a1->event.getNote(), a1->frame,
+			(void*) a2, 
 			a2->event.getStatus(), a2->event.getNote(), a2->frame
 		);
+		
+		assert(a1 != nullptr && a2 != nullptr);
 
 		Pixel px = x() + m_base->frameToPixel(a1->frame);
 		Pixel py = y() + noteToY(a1->event.getNote());

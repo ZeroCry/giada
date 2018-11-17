@@ -45,6 +45,7 @@ class Action;
 
 namespace recorder
 {
+void debug();
 /* init
 Initializes the recorder: everything starts from here. */
 

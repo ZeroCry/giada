@@ -147,22 +147,6 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 
 	trylock_([&](){ actions = std::move(temp); });
 }
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void debug_()
-{
-	puts("-------------");
-	for (auto& kv : actions) {
-		printf("frame: %d\n", kv.first);
-		for (const Action* action : kv.second)
-			printf(" this=%p - frame=%d, channel=%d, value=0x%X, next=%p\n", 
-				(void*) action, action->frame, action->channel, action->event.getRaw(), (void*) action->next);	
-	}
-	puts("-------------");
-}
 } // {anonymous}
 
 
@@ -176,6 +160,22 @@ void init(pthread_mutex_t* m)
 	mixerMutex = m;
 	active = false;
 	clearAll();
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void debug()
+{
+	puts("-------------");
+	for (auto& kv : actions) {
+		printf("frame: %d\n", kv.first);
+		for (const Action* action : kv.second)
+			printf(" this=%p - frame=%d, channel=%d, value=0x%X, next=%p\n", 
+				(void*) action, action->frame, action->channel, action->event.getRaw(), (void*) action->next);	
+	}
+	puts("-------------");
 }
 
 
@@ -271,11 +271,7 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev)
 		const_cast<Action*>(curr)->prev = prev;
 	}
 
-//debug_();
-
 	trylock_([&](){ actions = std::move(temp); });
-
-//debug_();
 
 	return curr;
 }
@@ -372,7 +368,7 @@ void shrink(int new_fpb)
 
 vector<const Action*> getActionsOnFrame(Frame frame)
 {
-	return actions[frame];
+	return actions.count(frame) ? actions[frame] : {};
 }
 
 

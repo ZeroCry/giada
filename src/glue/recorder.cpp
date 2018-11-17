@@ -76,7 +76,7 @@ void clearAllActions(geChannel* gch)
 {
 	if (!gdConfirmWin("Warning", "Clear all actions: are you sure?"))
 		return;
-	m::recorder_DEPR_::clearChan(gch->ch->index);
+	m::recorder::clearChannel(gch->ch->index);
 	updateChannel(gch);
 }
 
@@ -138,7 +138,18 @@ void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f
 
 	ch->hasActions = m::recorder::hasActions(ch->index);
 
+/*
 	gu_log("[c::recordMidiAction] record null.a=%d, null.b%d\n", a == nullptr, b == nullptr);
+	printf("    A: this=%p - frame=%d, channel=%d, value=0x%X, next=%p\n", 
+		(void*) a, a->frame, a->channel, a->event.getRaw(), (void*) a->next);		
+	printf("    B: this=%p - frame=%d, channel=%d, value=0x%X, prev=%p\n", 
+		(void*) b, b->frame, b->channel, b->event.getRaw(), (void*) b->prev);	
+*/
+/*
+puts("*********");
+m::recorder::debug();
+puts("*********");
+*/
 }
 
 
