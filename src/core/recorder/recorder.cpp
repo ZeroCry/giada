@@ -67,8 +67,9 @@ int              actionId   = 0;
 void trylock_(std::function<void()> f)
 {
 	assert(mixerMutex != nullptr);
-	f();
 	pthread_mutex_lock(mixerMutex);
+	puts("LOCK!");
+	f();
 	pthread_mutex_unlock(mixerMutex);
 	/*
 	while (pthread_mutex_trylock(mixerMutex) == 0) {
@@ -188,14 +189,15 @@ void debug()
 	puts("-------------");
 	for (auto& kv : actions) {
 		printf("frame: %d\n", kv.first);
-		for (const Action* action : kv.second) {
+		for (const Action* a : kv.second) {
 			total++;
-			printf(" this=%p - frame=%d, channel=%d, value=0x%X, next=%p\n", 
-				(void*) action, action->frame, action->channel, action->event.getRaw(), (void*) action->next);	
+			printf(" this=%p - id=%d, frame=%d, channel=%d, value=0x%X, next=%p\n", 
+				(void*) a, a->id, a->frame, a->channel, a->event.getRaw(), (void*) a->next);	
 		}
 	}
 	printf("TOTAL: %d\n", total);
 	puts("-------------");
+	assert(total % 2 == 0);
 }
 
 

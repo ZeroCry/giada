@@ -306,10 +306,14 @@ void gePianoRoll::onRefreshAction()
 	else if (m_action->onLeftEdge) {
 		f1 = m_base->pixelToFrame(p1);
 		f2 = m_action->a2->frame;
+		if (f1 == f2) // If snapping makes an action fall onto the other
+			f1 -= G_DEFAULT_ACTION_SIZE;
 	}
 	else if (m_action->onRightEdge) {
 		f1 = m_action->a1->frame;
 		f2 = m_base->pixelToFrame(p2);
+		if (f1 == f2) // If snapping makes an action fall onto the other
+			f2 += G_DEFAULT_ACTION_SIZE;
 	}
 
 	assert(f2 != 0);

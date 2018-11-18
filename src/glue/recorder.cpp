@@ -56,7 +56,7 @@ namespace
 {
 void updateChannel(geChannel* gch, bool refreshActionEditor=true)
 {
-	gch->ch->hasActions = m::recorder_DEPR_::hasActions(gch->ch->index);
+	gch->ch->hasActions = m::recorder::hasActions(gch->ch->index);
 	if (gch->ch->type == ChannelType::SAMPLE) {
 		geSampleChannel* gsch = static_cast<geSampleChannel*>(gch);
 		gsch->ch->hasActions ? gsch->showActionButton() : gsch->hideActionButton();
@@ -156,15 +156,15 @@ void deleteMidiAction(MidiChannel* ch, const m::Action* a)
 {
 	namespace mr = m::recorder;
 
-	/* If action is not orphaned, send a note-off first in case we are deleting 
-	it in a middle of a key_on/key_off sequence. Conversely, orphaned actions
-	should not play, so no need to fire the note-off. */
-	
-	if (a->next != nullptr) {
-		ch->sendMidi(a->next->event.getRaw());
-		mr::deleteAction(a->next);
-	}
+	assert(a != nullptr);
+	assert(a->event.getStatus() == m::MidiEvent::NOTE_ON);
+	assert(a->next != nullptr);
 
+	/* Send a note-off first in case we are deleting it in a middle of a 
+	key_on/key_off sequence. */
+	
+	ch->sendMidi(a->next->event.getRaw());
+	mr::deleteAction(a->next);
 	mr::deleteAction(a);
 
 	ch->hasActions = mr::hasActions(ch->index);
