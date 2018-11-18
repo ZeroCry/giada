@@ -206,10 +206,12 @@ bool readActions(json_t* jContainer, channel_t* channel)
 			return 0;
 
 		action_t action;
-		if (!storager::setInt   (jAction, PATCH_KEY_ACTION_TYPE,    action.type)) return 0;
-		if (!storager::setInt   (jAction, PATCH_KEY_ACTION_FRAME,   action.frame)) return 0;
-		if (!storager::setFloat (jAction, PATCH_KEY_ACTION_F_VALUE, action.fValue)) return 0;
-		if (!storager::setUint32(jAction, PATCH_KEY_ACTION_I_VALUE, action.iValue)) return 0;
+		if (!storager::setInt   (jAction, G_PATCH_KEY_ACTION_ID,      action.id)) return 0;
+		if (!storager::setInt   (jAction, G_PATCH_KEY_ACTION_CHANNEL, action.channel)) return 0;
+		if (!storager::setInt   (jAction, G_PATCH_KEY_ACTION_FRAME,   action.frame)) return 0;
+		if (!storager::setUint32(jAction, G_PATCH_KEY_ACTION_EVENT,   action.event)) return 0;
+		if (!storager::setInt   (jAction, G_PATCH_KEY_ACTION_PREV,    action.prev)) return 0;
+		if (!storager::setInt   (jAction, G_PATCH_KEY_ACTION_NEXT,    action.next)) return 0;
 		channel->actions.push_back(action);
 	}
 	return 1;
@@ -365,16 +367,17 @@ void writeColumns(json_t* jContainer, vector<column_t>* columns)
 /* -------------------------------------------------------------------------- */
 
 
-void writeActions(json_t*jContainer, vector<action_t>*actions)
+void writeActions(json_t* jContainer, vector<action_t>& actions)
 {
 	json_t* jActions = json_array();
-	for (unsigned k=0; k<actions->size(); k++) {
-		json_t*  jAction = json_object();
-		action_t action  = actions->at(k);
-		json_object_set_new(jAction, PATCH_KEY_ACTION_TYPE,    json_integer(action.type));
-		json_object_set_new(jAction, PATCH_KEY_ACTION_FRAME,   json_integer(action.frame));
-		json_object_set_new(jAction, PATCH_KEY_ACTION_F_VALUE, json_real(action.fValue));
-		json_object_set_new(jAction, PATCH_KEY_ACTION_I_VALUE, json_integer(action.iValue));
+	for (action_t action : actions) {
+		json_t* jAction = json_object();
+		json_object_set_new(jAction, G_PATCH_KEY_ACTION_ID,      json_integer(action.id));
+		json_object_set_new(jAction, G_PATCH_KEY_ACTION_CHANNEL, json_integer(action.channel));
+		json_object_set_new(jAction, G_PATCH_KEY_ACTION_FRAME,   json_integer(action.frame));
+		json_object_set_new(jAction, G_PATCH_KEY_ACTION_EVENT,   json_integer(action.event));
+		json_object_set_new(jAction, G_PATCH_KEY_ACTION_PREV,    json_integer(action.prev));
+		json_object_set_new(jAction, G_PATCH_KEY_ACTION_NEXT,    json_integer(action.next));
 		json_array_append_new(jActions, jAction);
 	}
 	json_object_set_new(jContainer, PATCH_KEY_CHANNEL_ACTIONS, jActions);
@@ -452,7 +455,7 @@ void writeChannels(json_t* jContainer, vector<channel_t>* channels)
 		json_object_set_new(jChannel, PATCH_KEY_CHANNEL_ARMED,                json_boolean(channel.armed));
 		json_array_append_new(jChannels, jChannel);
 
-		writeActions(jChannel, &channel.actions);
+		writeActions(jChannel, channel.actions);
 
 #ifdef WITH_VST
 

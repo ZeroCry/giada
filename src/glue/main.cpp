@@ -41,6 +41,7 @@
 #include "../core/clock.h"
 #include "../core/kernelMidi.h"
 #include "../core/kernelAudio.h"
+#include "../core/recorder/recorder.h"
 #include "../core/conf.h"
 #include "../core/const.h"
 #ifdef WITH_VST
@@ -255,7 +256,7 @@ void glue_resetToInitState(bool resetGui, bool createColumns)
 	mixer::close();
 	clock::init(conf::samplerate, conf::midiTCfps);
 	mixer::init(clock::getFramesInLoop(), kernelAudio::getRealBufSize());
-	recorder_DEPR_::init();
+	recorder::init(&mixer::mutex);
 #ifdef WITH_VST
 	pluginHost::freeAllStacks(&mixer::channels, &mixer::mutex);
 #endif

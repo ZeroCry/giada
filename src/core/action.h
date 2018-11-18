@@ -38,6 +38,7 @@ namespace m
 {
 struct Action
 {
+    int       id; // For persistence only
 	int       channel;
 	Frame     frame;
 	MidiEvent event;

@@ -37,6 +37,8 @@
 #include "midiChannel.h"
 #include "pluginHost.h"
 #include "plugin.h"
+#include "action.h"
+#include "recorder/recorder.h"
 #include "channelManager.h"
 
 
@@ -49,21 +51,6 @@ namespace channelManager
 {
 namespace
 {
-void writeActions_(int chanIndex, patch::channel_t& pch)
-{
-	recorder_DEPR_::forEachAction([&] (const recorder_DEPR_::action* a) {
-		if (a->chan != chanIndex) 
-			return;
-		pch.actions.push_back(patch::action_t { 
-			a->type, a->frame, a->fValue, a->iValue 
-		});
-	});
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
 void writePlugins_(const Channel* ch, patch::channel_t& pch)
 {
 #ifdef WITH_VST
@@ -89,10 +76,8 @@ void writePlugins_(const Channel* ch, patch::channel_t& pch)
 
 void readActions_(Channel* ch, const patch::channel_t& pch)
 {
-	for (const patch::action_t& ac : pch.actions) {
-		recorder_DEPR_::rec(ch->index, ac.type, ac.frame, ac.iValue, ac.fValue);
-		ch->hasActions = true;
-	}
+	recorder::readPatch(pch.actions);
+	ch->hasActions = pch.actions.size() > 0;
 }
 
 
@@ -173,7 +158,7 @@ int writePatch(const Channel* ch, bool isProject)
 	pch.midiOutLmute    = ch->midiOutLmute;
 	pch.midiOutLsolo    = ch->midiOutLsolo;
 
-	writeActions_(ch->index, pch);
+	recorder::writePatch(ch->index, pch.actions);
 	writePlugins_(ch, pch);
 
 	patch::channels.push_back(pch);
@@ -267,11 +252,11 @@ void readPatch(SampleChannel* ch, const string& basePath, int i)
 	ch->midiInVeloAsVol   = pch.midiInVeloAsVol;
 	ch->midiInReadActions = pch.midiInReadActions;
 	ch->midiInPitch       = pch.midiInPitch;
-  ch->inputMonitor      = pch.inputMonitor;
+	ch->inputMonitor      = pch.inputMonitor;
 	ch->setBoost(pch.boost);
 
-  Wave* w = nullptr;
-  int res = waveManager::create(basePath + pch.samplePath, &w); 
+	Wave* w = nullptr;
+	int res = waveManager::create(basePath + pch.samplePath, &w); 
 
 	if (res == G_RES_OK) {
 		ch->pushWave(w);

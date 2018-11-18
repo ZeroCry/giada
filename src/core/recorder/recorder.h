@@ -32,6 +32,7 @@
 #include <vector>
 #include <functional>
 #include "../types.h"
+#include "../patch.h"
 #include "../midiEvent.h"
 
 
@@ -123,6 +124,9 @@ void shrink(int new_fpb);
 std::vector<const Action*> getActionsOnFrame(Frame f);
 
 std::vector<const Action*> getActionsOnChannel(int channel);
+
+void writePatch(int chanIndex, std::vector<patch::action_t>& pactions);
+void readPatch(const std::vector<patch::action_t>& pactions);
 
 }}}; // giada::m::recorder::
 

@@ -145,11 +145,7 @@ void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f
 	printf("    B: this=%p - frame=%d, channel=%d, value=0x%X, prev=%p\n", 
 		(void*) b, b->frame, b->channel, b->event.getRaw(), (void*) b->prev);	
 */
-/*
-puts("*********");
 m::recorder::debug();
-puts("*********");
-*/
 }
 
 

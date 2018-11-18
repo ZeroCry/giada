@@ -367,6 +367,13 @@ const int MIDI_CHANS[G_MAX_MIDI_CHANS] = {
 #define PATCH_KEY_COLUMN_WIDTH                 "width"
 #define PATCH_KEY_COLUMN_CHANNELS              "channels"
 
+#define G_PATCH_KEY_ACTION_ID                  "id"
+#define G_PATCH_KEY_ACTION_CHANNEL             "channel"     
+#define G_PATCH_KEY_ACTION_FRAME               "frame"   
+#define G_PATCH_KEY_ACTION_EVENT               "event"   
+#define G_PATCH_KEY_ACTION_PREV                "prev"  
+#define G_PATCH_KEY_ACTION_NEXT                "next"
+
 /* JSON config keys */
 
 #define CONF_KEY_HEADER                   "header"

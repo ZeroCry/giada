@@ -56,10 +56,9 @@ lock-free solution will be implemented. */
 
 ActionMap actions;
 
-/* mixerMutex */
-
 pthread_mutex_t* mixerMutex = nullptr;
-bool active = false;
+bool             active     = false;
+int              actionId   = 0;
 
 
 /* -------------------------------------------------------------------------- */
@@ -68,11 +67,15 @@ bool active = false;
 void trylock_(std::function<void()> f)
 {
 	assert(mixerMutex != nullptr);
+	f();
+	pthread_mutex_lock(mixerMutex);
+	pthread_mutex_unlock(mixerMutex);
+	/*
 	while (pthread_mutex_trylock(mixerMutex) == 0) {
 		f();
 		pthread_mutex_unlock(mixerMutex);
 		break;
-	}
+	}*/
 }
 
 
@@ -132,8 +135,7 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 	
 	ActionMap temp;
 
-	for (auto& kv : actions)
-	{
+	for (auto& kv : actions) {
 		Frame frame = f(kv.first);
 
 		/* The value is the original array of actions stored in the old map. An
@@ -147,6 +149,19 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 
 	trylock_([&](){ actions = std::move(temp); });
 }
+
+
+/* -------------------------------------------------------------------------- */
+
+
+const Action* getActionById_(int id, const ActionMap& source)
+{
+	for (auto& kv : source)
+		for (const Action* action : kv.second)
+			if (action->id == id)
+				return action;
+	return nullptr;
+}
 } // {anonymous}
 
 
@@ -158,7 +173,8 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 void init(pthread_mutex_t* m)
 {
 	mixerMutex = m;
-	active = false;
+	active     = false;
+	actionId   = 0;
 	clearAll();
 }
 
@@ -168,13 +184,17 @@ void init(pthread_mutex_t* m)
 
 void debug()
 {
+	int total = 0;
 	puts("-------------");
 	for (auto& kv : actions) {
 		printf("frame: %d\n", kv.first);
-		for (const Action* action : kv.second)
+		for (const Action* action : kv.second) {
+			total++;
 			printf(" this=%p - frame=%d, channel=%d, value=0x%X, next=%p\n", 
 				(void*) action, action->frame, action->channel, action->event.getRaw(), (void*) action->next);	
+		}
 	}
+	printf("TOTAL: %d\n", total);
 	puts("-------------");
 }
 
@@ -259,7 +279,7 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev)
 	/* If key frame doesn't exist yet, the [] operator in std::map is smart enough 
 	to insert a new item first. Then swap the temp map with the original one. */
 	
-	temp[frame].push_back(new Action{ channel, frame, event, nullptr, nullptr });
+	temp[frame].push_back(new Action{ actionId++, channel, frame, event, nullptr, nullptr });
 	
 	/* Update the curr-next pointers in action, if a previous action has been
 	provided. Cast away the constness of prev: yes, recorder is allowed to do it.
@@ -368,7 +388,7 @@ void shrink(int new_fpb)
 
 vector<const Action*> getActionsOnFrame(Frame frame)
 {
-	return actions.count(frame) ? actions[frame] : {};
+	return actions.count(frame) ? actions[frame] : vector<const Action*>();
 }
 
 
@@ -396,4 +416,70 @@ void forEachAction(std::function<void(const Action*)> f)
 		for (const Action* action : kv.second)
 			f(action);
 }
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void writePatch(int chanIndex, std::vector<patch::action_t>& pactions)
+{
+	forEachAction([&] (const Action* a) 
+	{
+		if (a->channel != chanIndex) 
+			return;
+		pactions.push_back(patch::action_t { 
+			a->id, 
+			a->channel, 
+			a->frame, 
+			a->event.getRaw(), 
+			a->prev != nullptr ? a->prev->id : -1,
+			a->next != nullptr ? a->next->id : -1
+		});
+	});
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void readPatch(const vector<patch::action_t>& pactions)
+{
+	ActionMap temp = actions;
+
+	/* First pass: add actions with no relationship (no prev/next). */
+
+	for (const patch::action_t paction : pactions) {
+		temp[paction.frame].push_back(new Action{ 
+			paction.id, 
+			paction.channel, 
+			paction.frame, 
+			MidiEvent(paction.event), 
+			nullptr, 
+			nullptr 
+		});
+		if (actionId < paction.id) actionId = paction.id; // Update id generator
+	}
+
+	/* Second pass: fill in previous and next actions, if any. */
+
+	for (const patch::action_t paction : pactions) {
+		if (paction.next == -1 && paction.prev == -1) 
+			continue;
+		Action* curr = const_cast<Action*>(getActionById_(paction.id, temp));
+		assert(curr != nullptr);
+		if (paction.next != -1) {
+			curr->next = getActionById_(paction.next, temp);
+			assert(curr->next != nullptr);
+		}
+		else {
+			curr->prev = getActionById_(paction.prev, temp);
+			assert(curr->prev != nullptr);
+		}
+	}
+
+	trylock_([&](){ actions = std::move(temp); });
+
+debug();
+}
+
 }}}; // giada::m::recorder::

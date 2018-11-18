@@ -90,14 +90,13 @@ static void glue_fillPatchColumns__()
 	using namespace giada::m;
 
 	for (unsigned i=0; i<G_MainWin->keyboard->getTotalColumns(); i++) {
-		geColumn *gCol = G_MainWin->keyboard->getColumn(i);
+		geColumn* gCol = G_MainWin->keyboard->getColumn(i);
 		patch::column_t pCol;
 		pCol.index = gCol->getIndex();
 		pCol.width = gCol->w();
 		for (int k=0; k<gCol->countChannels(); k++) {
-			Channel *colChannel = gCol->getChannel(k);
-			for (unsigned j=0; j<mixer::channels.size(); j++) {
-				Channel *mixerChannel = mixer::channels.at(j);
+			Channel* colChannel = gCol->getChannel(k);
+			for (const Channel* mixerChannel : mixer::channels) {
 				if (colChannel == mixerChannel) {
 					pCol.channels.push_back(mixerChannel->index);
 					break;

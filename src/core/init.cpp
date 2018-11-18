@@ -112,7 +112,6 @@ void initAudio_()
   kernelAudio::openDevice();
   clock::init(conf::samplerate, conf::midiTCfps);
 	mixer::init(clock::getFramesInLoop(), kernelAudio::getRealBufSize());
-	recorder_DEPR_::init();
 	recorder::init(&mixer::mutex);
 
 #ifdef WITH_VST

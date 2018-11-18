@@ -40,11 +40,22 @@ namespace patch
 {
 struct action_t
 {
-	int      type;
+	int      id;
+	int      channel;
+	int      frame;
+	uint32_t event;
+	int      prev;
+	int      next;
+};
+/*
+struct action_t
+{
+	int      id;
 	int      frame;
 	float    fValue;
 	uint32_t iValue;
 };
+*/
 
 #ifdef WITH_VST
 struct plugin_t
