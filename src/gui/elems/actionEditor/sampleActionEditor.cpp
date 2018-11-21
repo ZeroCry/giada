@@ -146,7 +146,7 @@ void geSampleActionEditor::onAddAction()
 
 void geSampleActionEditor::onDeleteAction()  
 {
-	//c::recorder::deleteSampleAction(static_cast<SampleChannel*>(m_ch), m_action->a1, m_action->a2);
+	c::recorder::deleteSampleAction(static_cast<SampleChannel*>(m_ch), m_action->a1);
 	rebuild();
 }
 

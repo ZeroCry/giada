@@ -167,7 +167,7 @@ void deleteMidiAction(MidiChannel* ch, const m::Action* a)
 	mr::deleteAction(a->next);
 	mr::deleteAction(a);
 
-	ch->hasActions = mr::hasActions(ch->index);
+	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -249,19 +249,19 @@ void deleteEnvelopeAction(Channel* ch, m::recorder_DEPR_::action a, bool moved)
 /* -------------------------------------------------------------------------- */
 
 
-void deleteSampleAction(SampleChannel* ch, m::recorder_DEPR_::action a1,
-	m::recorder_DEPR_::action a2)
+void deleteSampleAction(SampleChannel* ch, const m::Action* a)
 {
-	namespace mr = m::recorder_DEPR_;
+	namespace mr = m::recorder;
 
-	/* if SINGLE_PRESS delete both the keypress and the keyrelease pair. */
+	assert(a != nullptr);
+
+	/* if SINGLE_PRESS delete the keyrelease first. */
 
 	if (ch->mode == ChannelMode::SINGLE_PRESS) {
-		mr::deleteAction(ch->index, a1.frame, G_ACTION_KEYPRESS, false, &m::mixer::mutex);
-		mr::deleteAction(ch->index, a2.frame, G_ACTION_KEYREL, false, &m::mixer::mutex);
+		assert(a->next != nullptr);
+		mr::deleteAction(a->next);
 	}
-	else
-		mr::deleteAction(ch->index, a1.frame, a1.type, false, &m::mixer::mutex);
+	mr::deleteAction(a);
 
   updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }

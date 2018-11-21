@@ -74,7 +74,6 @@ void updateVelocity(const MidiChannel* ch, const m::Action* a, int value);
 
 
 
-void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue);
 
 void recordSampleAction(const SampleChannel* ch, int type, Frame f1, Frame f2=0);
 
@@ -85,13 +84,13 @@ the Composite struct if left empty (with action2.frame = -1). */
 
 std::vector<const m::Action*> getSampleActions(const SampleChannel* ch);
 
+void deleteSampleAction(SampleChannel* ch, const m::Action* a);
+
+
 
 std::vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type);
 
-
-
-void deleteSampleAction(SampleChannel* ch, m::recorder_DEPR_::action a1,
-	m::recorder_DEPR_::action a2);
+void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue);
 
 void deleteEnvelopeAction(Channel* ch, m::recorder_DEPR_::action a, bool moved);
 
