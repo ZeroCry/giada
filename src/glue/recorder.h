@@ -86,6 +86,9 @@ std::vector<const m::Action*> getSampleActions(const SampleChannel* ch);
 
 void deleteSampleAction(SampleChannel* ch, const m::Action* a);
 
+void updateSampleAction(SampleChannel* ch, const m::Action* a, int type, Frame f1, Frame f2=0);
+
+
 
 
 std::vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type);

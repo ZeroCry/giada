@@ -206,13 +206,9 @@ void shutdownAudio_()
 
 void shutdownGUI_()
 {
-	/* Close any open subwindow, especially before cleaning PluginHost to avoid 
-	mess. */
-
 	gu_closeAllSubwindows();
-	gu_log("[init] all subwindows closed\n");
-
 	videoThread.join();	
+	gu_log("[init] All subwindows and UI thread closed\n");
 }
 } // {anonymous}
 

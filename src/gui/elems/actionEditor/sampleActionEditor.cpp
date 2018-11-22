@@ -199,7 +199,7 @@ void geSampleActionEditor::onRefreshAction()
 	Pixel p2   = m_action->x() + m_action->w() - x();
 	Frame f1   = 0;
 	Frame f2   = 0;
-	int   type = 0; //m_action->a1->type;
+	int   type = m_action->a1->event.getStatus();
 
 	if (!m_action->isOnEdges()) {
 		f1 = m_base->pixelToFrame(p1);
@@ -214,15 +214,7 @@ void geSampleActionEditor::onRefreshAction()
 		f2 = m_base->pixelToFrame(p2);
 	}
 
-	/* TODO - less then optimal. Let's wait for recorder refactoring... */
-
-#if 0
-	cr::deleteSampleAction(ch, m_action->a1, m_action->a2);
-	if (cr::sampleActionCanFit(ch, f1, f2))
-		cr::recordSampleAction(ch, type, f1, f2);
-	else
-		cr::recordSampleAction(ch, type, m_action->a1->frame, m_action->a2->frame);
-#endif
+	cr::updateSampleAction(ch, m_action->a1, type, f1, f2);
 			
 	rebuild();
 }

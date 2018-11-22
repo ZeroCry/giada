@@ -213,6 +213,22 @@ void recordSampleAction(const SampleChannel* ch, int type, Frame f1, Frame f2)
 /* -------------------------------------------------------------------------- */
 
 
+void updateSampleAction(SampleChannel* ch, const m::Action* a, int type, Frame f1, 
+	Frame f2)
+{
+	namespace mr = m::recorder;	
+
+	if (ch->mode == ChannelMode::SINGLE_PRESS)
+		mr::deleteAction(a->next);
+	mr::deleteAction(a);
+
+	recordSampleAction(ch, type, f1, f2);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue)
 {
 	namespace mr = m::recorder_DEPR_;
