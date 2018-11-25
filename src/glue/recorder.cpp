@@ -231,10 +231,9 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 
 	if (!mr::hasActions(ch->index, type)) {
 		m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, G_MAX_VELOCITY);
-		m::MidiEvent e3 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, G_MAX_VELOCITY);
 		const m::Action* a1 = mr::rec(ch->index, 0, e1, nullptr, nullptr);	
 		const m::Action* a2 = mr::rec(ch->index, frame, e2, nullptr, nullptr);
-		const m::Action* a3 = mr::rec(ch->index, m::clock::getFramesInLoop() - 1, e3, nullptr, nullptr);
+		const m::Action* a3 = mr::rec(ch->index, m::clock::getFramesInLoop() - 1, e1, nullptr, nullptr);
 		mr::updateSiblings(a1, nullptr, a2);
 		mr::updateSiblings(a2, a1, a3);
 		mr::updateSiblings(a3, a2, nullptr);
@@ -246,8 +245,6 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 		assert(a3 != nullptr);
 		mr::rec(ch->index, frame, e2, a1, a3);
 	}
-
-mr::debug();
 
 	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }

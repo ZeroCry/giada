@@ -190,8 +190,8 @@ void debug()
 		printf("frame: %d\n", kv.first);
 		for (const Action* a : kv.second) {
 			total++;
-			printf(" this=%p - id=%d, frame=%d, channel=%d, value=0x%X, next=%p\n", 
-				(void*) a, a->id, a->frame, a->channel, a->event.getRaw(), (void*) a->next);	
+			printf(" this=%p - id=%d, frame=%d, channel=%d, value=0x%X, prev=%p, next=%p\n", 
+				(void*) a, a->id, a->frame, a->channel, a->event.getRaw(), (void*) a->prev, (void*) a->next);	
 		}
 	}
 	printf("TOTAL: %d\n", total);
@@ -499,7 +499,7 @@ void readPatch(const vector<patch::action_t>& pactions)
 			curr->next = getActionById_(paction.next, temp);
 			assert(curr->next != nullptr);
 		}
-		else {
+		if (paction.prev != -1) {
 			curr->prev = getActionById_(paction.prev, temp);
 			assert(curr->prev != nullptr);
 		}

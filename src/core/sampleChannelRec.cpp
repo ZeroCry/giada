@@ -26,6 +26,7 @@
 
 
 #include <cassert>
+#include "../utils/math.h"
 #include "const.h"
 #include "conf.h"
 #include "clock.h"
@@ -80,8 +81,17 @@ bool recorderCanRec_(SampleChannel* ch)
 /* calcVolumeEnv
 Computes any changes in volume done via envelope tool. */
 
-void calcVolumeEnv_(SampleChannel* ch, int globalFrame)
+void calcVolumeEnv_(SampleChannel* ch, const Action* a1)
 {
+	const Action* a2 = a1->next;
+
+	float vf1 = u::math::map<int, float>(a1->event.getVelocity(), 0, G_MAX_VELOCITY, 0, 1.0);
+	float vf2 = u::math::map<int, float>(a2->event.getVelocity(), 0, G_MAX_VELOCITY, 0, 1.0);
+
+	ch->volume_i = vf1;
+	ch->volume_d = ((vf2 - vf1) / (a2->frame - a1->frame)) * 1.003f;	
+
+#if 0
 	/* method: check this frame && next frame, then calculate delta */
 
 	recorder_DEPR_::action* a0 = nullptr;
@@ -108,6 +118,7 @@ void calcVolumeEnv_(SampleChannel* ch, int globalFrame)
 
 	ch->volume_i = a0->fValue;
 	ch->volume_d = ((a1->fValue - a0->fValue) / (a1->frame - a0->frame)) * 1.003f;
+#endif
 }
 
 
@@ -139,7 +150,7 @@ void parseAction_(SampleChannel* ch, const Action* a, int localFrame, int global
 				ch->kill(localFrame);
 			break;
 		case MidiEvent::ENVELOPE:
-			calcVolumeEnv_(ch, globalFrame);
+			calcVolumeEnv_(ch, a);
 			break;
 	}
 }
