@@ -57,8 +57,8 @@ private:
 	void onRefreshAction() override;
 
 	Pixel frameToX(Frame frame) const;
-	Pixel valueToY(float value) const;
-	float yToValue(Pixel pixel) const;
+	Pixel valueToY(int value) const;
+	int   yToValue(Pixel pixel) const;
 
 	bool isFirstPoint() const;
 	bool isLastPoint()  const;

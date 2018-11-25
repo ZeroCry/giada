@@ -31,6 +31,8 @@
 #include "../../../utils/math.h"
 #include "../../../core/const.h"
 #include "../../../core/conf.h"
+#include "../../../core/action.h"
+#include "../../../core/recorder/recorder.h"
 #include "../../../core/sampleChannel.h"
 #include "../../../glue/recorder.h"
 #include "../../dialogs/actionEditor/baseActionEditor.h"
@@ -47,7 +49,7 @@ namespace v
 geEnvelopeEditor::geEnvelopeEditor(Pixel x, Pixel y, int actionType, const char* l, 
 	SampleChannel* ch)
 :	geBaseActionEditor(x, y, 200, m::conf::envelopeEditorH, ch),	
-  m_actionType      (actionType)
+	m_actionType      (actionType)
 {
 	copy_label(l);
 	rebuild();
@@ -86,7 +88,6 @@ void geEnvelopeEditor::draw()
 	Pixel x2 = 0;
 	Pixel y2 = 0;
 
-#if 0
 	/* For each point: 
 		- paint the connecting line with the next one;
 		- reposition it on the y axis, only if there's no point selected (dragged
@@ -95,7 +96,7 @@ void geEnvelopeEditor::draw()
 	for (int i=0; i<children(); i++) {
 		geEnvelopePoint* p = static_cast<geEnvelopePoint*>(child(i));
 		if (m_action == nullptr)
-			p->position(p->x(), valueToY(p->a1->event.getVelocity())); // TODO is velocity right?
+			p->position(p->x(), valueToY(p->a1->event.getVelocity()));
 		if (i > 0) {
 			x2 = p->x() + side;
 			y2 = p->y() + side;
@@ -104,7 +105,7 @@ void geEnvelopeEditor::draw()
 			y1 = y2;
 		}
 	}
-#endif
+
 	draw_children();
 }
 
@@ -114,7 +115,7 @@ void geEnvelopeEditor::draw()
 
 void geEnvelopeEditor::rebuild()
 {
-	namespace mr = m::recorder_DEPR_;
+	namespace mr = m::recorder;
 	namespace cr = c::recorder;
 
 	/* Remove all existing actions and set a new width, according to the current
@@ -123,11 +124,10 @@ void geEnvelopeEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	vector<mr::action> actions = cr::getEnvelopeActions(m_ch, m_actionType);
-
-	for (mr::action a : actions) {
-		gu_log("[geEnvelopeEditor::rebuild] Action %d\n", a.frame);
-		//add(new geEnvelopePoint(frameToX(a.frame), valueToY(a.fValue), a)); 		
+	for (const m::Action* a : cr::getEnvelopeActions(m_ch, m_actionType)) {
+		if (a->event.getStatus() != m::MidiEvent::ENVELOPE)
+			continue;
+		add(new geEnvelopePoint(frameToX(a->frame), valueToY(a->event.getVelocity()), a)); 		
 	}
 
 	resizable(nullptr);
@@ -160,15 +160,15 @@ Pixel geEnvelopeEditor::frameToX(Frame frame) const
 }
 
 
-Pixel geEnvelopeEditor::valueToY(float value) const
+Pixel geEnvelopeEditor::valueToY(int value) const
 {
-	return u::math::map<float, Pixel>(value, 0.0, 1.0, y() + (h() - geEnvelopePoint::SIDE), y());
+	return u::math::map<int, Pixel>(value, 0, G_MAX_VELOCITY, y() + (h() - geEnvelopePoint::SIDE), y());
 }
 
 
-float geEnvelopeEditor::yToValue(Pixel pixel) const
+int geEnvelopeEditor::yToValue(Pixel pixel) const
 {
-	return u::math::map<Pixel, float>(pixel, h() - geEnvelopePoint::SIDE, 0, 0.0, 1.0);	
+	return u::math::map<Pixel, int>(pixel, h() - geEnvelopePoint::SIDE, 0, 0, G_MAX_VELOCITY);	
 }
 
 
@@ -178,7 +178,7 @@ float geEnvelopeEditor::yToValue(Pixel pixel) const
 void geEnvelopeEditor::onAddAction()     
 {
 	Frame f = m_base->pixelToFrame(Fl::event_x() - x());
-	float v = yToValue(Fl::event_y() - y());
+	int   v = yToValue(Fl::event_y() - y());
 	c::recorder::recordEnvelopeAction(m_ch, m_actionType, f, v);
 	rebuild();
 }
@@ -189,7 +189,7 @@ void geEnvelopeEditor::onAddAction()
 
 void geEnvelopeEditor::onDeleteAction()  
 {
-	//c::recorder::deleteEnvelopeAction(m_ch, m_action->a1, /*moved=*/false);
+	c::recorder::deleteEnvelopeAction(m_ch, m_action->a1);
 	rebuild();
 }
 

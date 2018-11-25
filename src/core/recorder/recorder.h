@@ -77,10 +77,12 @@ Changes the event in action 'a'. */
 
 void updateEvent(const Action* a, MidiEvent e);
 
+void updateSiblings(const Action* a, const Action* prev, const Action* next);
+
 /* hasActions
 Checks if the channel has at least one action recorded. */
 
-bool hasActions(int channel);
+bool hasActions(int channel, int type=0);
 
 /* isActive
 Is recorder active? Call this one BEFORE rec(). */
@@ -93,7 +95,8 @@ void disable();
 /* rec
 Records an action. */
 
-const Action* rec(int channel, Frame frame, MidiEvent e, const Action* prev);
+const Action* rec(int channel, Frame frame, MidiEvent e, const Action* prev, 
+    const Action* next=nullptr);
 
 /* canFit
 Tells if the action can fit the current layout. Call this before recording a 
@@ -122,6 +125,8 @@ void expand(int old_fpb, int new_fpb);
 void shrink(int new_fpb);
 
 std::vector<const Action*> getActionsOnFrame(Frame f);
+
+const Action* getActionInFrameRange(int channel, Frame f, int type);
 
 std::vector<const Action*> getActionsOnChannel(int channel);
 

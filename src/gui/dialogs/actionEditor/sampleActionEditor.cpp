@@ -27,6 +27,7 @@
 
 #include <string>
 #include "../../../core/const.h"
+#include "../../../core/midiEvent.h"
 #include "../../../core/graphics.h"
 #include "../../../core/sampleChannel.h"
 #include "../../elems/basics/scroll.h"
@@ -86,7 +87,7 @@ gdSampleActionEditor::gdSampleActionEditor(SampleChannel* ch)
 	viewport->add(ac);
 	viewport->add(new geResizerBar(ac->x(), ac->y()+ac->h(), viewport->w(), RESIZER_BAR_H, MIN_WIDGET_H));
 	
-	vc = new geEnvelopeEditor(viewport->x(), ac->y()+ac->h()+RESIZER_BAR_H, G_ACTION_VOLUME, "volume", ch);
+	vc = new geEnvelopeEditor(viewport->x(), ac->y()+ac->h()+RESIZER_BAR_H, m::MidiEvent::ENVELOPE, "volume", ch);
 	viewport->add(vc);
 	viewport->add(new geResizerBar(vc->x(), vc->y()+vc->h(), viewport->w(), RESIZER_BAR_H, MIN_WIDGET_H));
 

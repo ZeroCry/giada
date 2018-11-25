@@ -79,6 +79,9 @@ void geSampleActionEditor::rebuild()
 
 	for (const m::Action* action : cr::getSampleActions(ch)) {
 
+		if (action->event.getStatus() == m::MidiEvent::ENVELOPE)
+			continue;
+
 		const m::Action* a1 = action;
 		const m::Action* a2 = action->next;
 

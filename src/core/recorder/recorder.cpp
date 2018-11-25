@@ -68,7 +68,6 @@ void trylock_(std::function<void()> f)
 {
 	assert(mixerMutex != nullptr);
 	pthread_mutex_lock(mixerMutex);
-	puts("LOCK!");
 	f();
 	pthread_mutex_unlock(mixerMutex);
 	/*
@@ -197,7 +196,6 @@ void debug()
 	}
 	printf("TOTAL: %d\n", total);
 	puts("-------------");
-	assert(total % 2 == 0);
 }
 
 
@@ -253,11 +251,22 @@ void updateEvent(const Action* a, MidiEvent e)
 /* -------------------------------------------------------------------------- */
 
 
-bool hasActions(int channel)
+void updateSiblings(const Action* a, const Action* prev, const Action* next)
+{
+	assert(a != nullptr);
+	const_cast<Action*>(a)->prev = prev;
+	const_cast<Action*>(a)->next = next;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+bool hasActions(int channel, int type)
 {
 	for (auto& kv : actions)
 		for (const Action* action : kv.second)
-			if (action->channel == channel)
+			if (action->channel == channel && (type == 0 || type == action->event.getStatus()))
 				return true;
 	return false;
 }
@@ -274,25 +283,25 @@ void disable()  { active = false; }
 /* -------------------------------------------------------------------------- */
 
 
-const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev)
+const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev,
+	const Action* next)
 {
 	ActionMap temp = actions;
 
-	/* If key frame doesn't exist yet, the [] operator in std::map is smart enough 
-	to insert a new item first. Then swap the temp map with the original one. */
+	/* If key frame doesn't exist yet, the [] operator in std::map is smart 
+	enough to insert a new item first. Then swap the temp map with the original 
+	one. */
 	
-	temp[frame].push_back(new Action{ actionId++, channel, frame, event, nullptr, nullptr });
-	
-	/* Update the curr-next pointers in action, if a previous action has been
-	provided. Cast away the constness of prev: yes, recorder is allowed to do it.
-	Recorder is the sole owner and manager of all actions ;) */
+	temp[frame].push_back(new Action{ actionId++, channel, frame, event, prev, next });
 
+	/* Update linked actions, if any. */
+	
 	const Action* curr = temp[frame].back();
-	if (prev != nullptr) {
+	if (prev != nullptr)
 		const_cast<Action*>(prev)->next = curr;
-		const_cast<Action*>(curr)->prev = prev;
-	}
-
+	if (next != nullptr)
+		const_cast<Action*>(next)->prev = curr;
+	
 	trylock_([&](){ actions = std::move(temp); });
 
 	return curr;
@@ -391,6 +400,23 @@ void shrink(int new_fpb)
 vector<const Action*> getActionsOnFrame(Frame frame)
 {
 	return actions.count(frame) ? actions[frame] : vector<const Action*>();
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+const Action* getActionInFrameRange(int channel, Frame f, int type)
+{
+	const Action* out = nullptr;
+	forEachAction([&] (const Action* a)
+	{
+		if (a->event.getStatus() != type || a->channel != channel)
+			return;
+		if (out == nullptr || (a->frame < f && a->frame > out->frame))
+			out = a;
+	});
+	return out;
 }
 
 

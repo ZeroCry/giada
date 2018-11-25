@@ -52,50 +52,30 @@ void clearStartStopActions(geChannel* gch);
 
 
 
-/* MOVE ALL THESE FUNCTIONS TO c::actionEditor*/
+/* MOVE ALL THESE FUNCTIONS TO c::actionEditor. These functions are designed for 
+the Piano Roll (not for live recording).*/
 
-/* recordMidiAction
-Records a new MIDI action at frame_a. If frame_b == 0, uses the default action
-size. This function is designed for the Piano Roll (not for live recording). */
+/* MIDI actions.  */
 
 void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f2=0);
-
 void deleteMidiAction(MidiChannel* ch, const m::Action* a);
-
 void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocity, 
     Frame f1, Frame f2);
-
-/* getMidiActions
-Returns a vector of actions, ready to be displayed in a MIDI note editor. */
-
 std::vector<const m::Action*> getMidiActions(const MidiChannel* ch);
-
 void updateVelocity(const MidiChannel* ch, const m::Action* a, int value);
 
-
-
+/* Sample Actions. */
 
 void recordSampleAction(const SampleChannel* ch, int type, Frame f1, Frame f2=0);
-
-/* getSampleActions
-Returns a list of Composite actions, ready to be displayed in a Sample Action
-Editor. If actions are not keypress+keyrelease combos, the second action in
-the Composite struct if left empty (with action2.frame = -1). */
-
 std::vector<const m::Action*> getSampleActions(const SampleChannel* ch);
-
 void deleteSampleAction(SampleChannel* ch, const m::Action* a);
-
 void updateSampleAction(SampleChannel* ch, const m::Action* a, int type, Frame f1, Frame f2=0);
 
+/* Envelope actions (only volume for now). */
 
-
-
-std::vector<m::recorder_DEPR_::action> getEnvelopeActions(const Channel* ch, int type);
-
-void recordEnvelopeAction(Channel* ch, int type, int frame, float fValue);
-
-void deleteEnvelopeAction(Channel* ch, m::recorder_DEPR_::action a, bool moved);
+std::vector<const m::Action*> getEnvelopeActions(const Channel* ch, int type);
+void recordEnvelopeAction(Channel* ch, int type, int frame, int value);
+void deleteEnvelopeAction(Channel* ch, const m::Action* a);
 
 }}} // giada::c::recorder::
 
