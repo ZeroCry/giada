@@ -76,6 +76,7 @@ void updateSampleAction(SampleChannel* ch, const m::Action* a, int type, Frame f
 std::vector<const m::Action*> getEnvelopeActions(const Channel* ch, int type);
 void recordEnvelopeAction(Channel* ch, int type, int frame, int value);
 void deleteEnvelopeAction(Channel* ch, const m::Action* a);
+void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value);
 
 }}} // giada::c::recorder::
 

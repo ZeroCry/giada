@@ -222,6 +222,9 @@ void updateSampleAction(SampleChannel* ch, const m::Action* a, int type, Frame f
 
 void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 {
+	/* TODO - this function assumes we are working with ENVELOPE events. This
+	should be generalized. */
+	
 	namespace mr = m::recorder;
 
 	m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, value);
@@ -236,7 +239,7 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 		const m::Action* a3 = mr::rec(ch->index, m::clock::getFramesInLoop() - 1, e1, nullptr, nullptr);
 		mr::updateSiblings(a1, nullptr, a2);
 		mr::updateSiblings(a2, a1, a3);
-		mr::updateSiblings(a3, a2, nullptr);
+		mr::updateSiblings(a3, a2, a1);
 	}
 	else {
 		const m::Action* a1 = mr::getActionInFrameRange(ch->index, frame, m::MidiEvent::ENVELOPE);
@@ -274,6 +277,31 @@ void deleteEnvelopeAction(Channel* ch, const m::Action* a)
 	mr::updateSiblings(a3, a1, a3->next);
 
 	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value)
+{
+	namespace mr = m::recorder;
+
+	assert(a != nullptr);
+
+	/* Update the action directly if it is a boundary one. Else, delete the
+	previous one and record a new action. */
+
+	int type = a->event.getStatus();
+
+	if (a->prev == nullptr || a->next == nullptr)
+		mr::updateEvent(a, m::MidiEvent(type, 0, value));
+	else {
+		deleteEnvelopeAction(ch, a);
+		recordEnvelopeAction(ch, type, frame, value); 
+	}
+
+	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);	
 }
 
 

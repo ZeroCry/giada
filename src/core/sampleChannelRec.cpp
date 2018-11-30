@@ -83,6 +83,9 @@ Computes any changes in volume done via envelope tool. */
 
 void calcVolumeEnv_(SampleChannel* ch, const Action* a1)
 {
+	assert(a1 != nullptr);
+	assert(a1->next != nullptr);
+
 	const Action* a2 = a1->next;
 
 	float vf1 = u::math::map<int, float>(a1->event.getVelocity(), 0, G_MAX_VELOCITY, 0, 1.0);

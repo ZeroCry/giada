@@ -227,8 +227,8 @@ void geEnvelopeEditor::onRefreshAction()
 {
 	Frame f = m_base->pixelToFrame((m_action->x() - x()) + geEnvelopePoint::SIDE / 2);
 	float v = yToValue(m_action->y() - y());
-	//c::recorder::deleteEnvelopeAction(m_ch, m_action->a1, /*moved=*/true);
-	//c::recorder::recordEnvelopeAction(m_ch, m_actionType, f, v);
+	c::recorder::updateEnvelopeAction(m_ch, m_action->a1, f, v);
+
 	rebuild();
 }
 }} // giada::v::
