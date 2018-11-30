@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include "../utils/math.h"
+#include "recorder/recorder.h"
 #include "const.h"
 #include "conf.h"
 #include "clock.h"
@@ -71,7 +72,14 @@ void onFirstBeat_(SampleChannel* ch, bool recsStopOnChanHalt)
 
 bool recorderCanRec_(SampleChannel* ch)
 {
-	return recorder_DEPR_::canRec(ch, clock::isRunning(), mixer::recording);
+	/* Can record on a channel if:
+		- recorder is on
+		- mixer is running
+		- mixer is not recording a take somewhere
+		- channel is MIDI or SAMPLE type with data in it  */
+
+	return recorder::isActive() && clock::isRunning() && !mixer::recording && 
+		(ch->type == ChannelType::MIDI || (ch->type == ChannelType::SAMPLE && ch->hasData()));
 }
 
 
@@ -92,36 +100,7 @@ void calcVolumeEnv_(SampleChannel* ch, const Action* a1)
 	float vf2 = u::math::map<int, float>(a2->event.getVelocity(), 0, G_MAX_VELOCITY, 0, 1.0);
 
 	ch->volume_i = vf1;
-	ch->volume_d = ((vf2 - vf1) / (a2->frame - a1->frame)) * 1.003f;	
-
-#if 0
-	/* method: check this frame && next frame, then calculate delta */
-
-	recorder_DEPR_::action* a0 = nullptr;
-	recorder_DEPR_::action* a1 = nullptr;
-	int res;
-
-	/* get this action on frame 'frame'. It's unlikely that the action
-	 * is not found. */
-
-	res = recorder_DEPR_::getAction(ch->index, G_ACTION_VOLUME, globalFrame, &a0);
-
-	assert(res != 0);
-
-	/* get the action next to this one.
-	 * res == -1: a1 not found, this is the last one. Rewind the search
-	 * and use action at frame number 0 (actions[0]).
-	 * res == -2 G_ACTION_VOLUME not found. This should never happen */
-
-	res = recorder_DEPR_::getNextAction(ch->index, G_ACTION_VOLUME, globalFrame, &a1);
-	if (res == -1)
-		res = recorder_DEPR_::getAction(ch->index, G_ACTION_VOLUME, 0, &a1);
-
-	assert(res != -2);
-
-	ch->volume_i = a0->fValue;
-	ch->volume_d = ((a1->fValue - a0->fValue) / (a1->frame - a0->frame)) * 1.003f;
-#endif
+	ch->volume_d = ((vf2 - vf1) / (a2->frame - a1->frame)) * 1.003f;
 }
 
 

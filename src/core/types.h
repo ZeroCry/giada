@@ -35,15 +35,6 @@ using Pixel = int;
 using Frame = int;
 
 
-enum class ActionType : int
-{
-	NOTE_ON   = 0x90, 
-	NOTE_OFF  = 0x80, 
-	NOTE_KILL = 0x00,
-	ENVELOPE  = 0xB0
-};
-
-
 enum class ChannelType : int 
 {
 	SAMPLE = 1, MIDI

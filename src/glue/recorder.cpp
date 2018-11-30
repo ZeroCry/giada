@@ -54,7 +54,7 @@ namespace recorder
 {
 namespace
 {
-void updateChannel(geChannel* gch, bool refreshActionEditor=true)
+void updateChannel_(geChannel* gch, bool refreshActionEditor=true)
 {
 	gch->ch->hasActions = m::recorder::hasActions(gch->ch->index);
 	if (gch->ch->type == ChannelType::SAMPLE) {
@@ -63,6 +63,17 @@ void updateChannel(geChannel* gch, bool refreshActionEditor=true)
 	}
 	if (refreshActionEditor)
 		gu_refreshActionEditor(); // refresh a.editor window, it could be open
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+bool isBoundaryEnvelopeAction_(const m::Action* a)
+{
+	assert(a->prev != nullptr);
+	assert(a->next != nullptr);
+	return a->prev->frame > a->frame || a->next->frame < a->frame;
 }
 }; // {anonymous}
 
@@ -77,7 +88,7 @@ void clearAllActions(geChannel* gch)
 	if (!gdConfirmWin("Warning", "Clear all actions: are you sure?"))
 		return;
 	m::recorder::clearChannel(gch->ch->index);
-	updateChannel(gch);
+	updateChannel_(gch);
 }
 
 
@@ -89,7 +100,7 @@ void clearVolumeActions(geChannel* gch)
 	if (!gdConfirmWin("Warning", "Clear all volume actions: are you sure?"))
 		return;
 	m::recorder_DEPR_::clearAction(gch->ch->index, G_ACTION_VOLUME);
-	updateChannel(gch);
+	updateChannel_(gch);
 }
 
 
@@ -101,7 +112,7 @@ void clearStartStopActions(geChannel* gch)
 	if (!gdConfirmWin("Warning", "Clear all start/stop actions: are you sure?"))
 		return;
 	m::recorder_DEPR_::clearAction(gch->ch->index, G_ACTION_KEYPRESS | G_ACTION_KEYREL | G_ACTION_KILL);
-	updateChannel(gch);
+	updateChannel_(gch);
 }
 
 
@@ -136,7 +147,7 @@ void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f
 	const m::Action* a = m::recorder::rec(ch->index, f1, e1, nullptr, nullptr);
 	                     m::recorder::rec(ch->index, f2, e2, a, nullptr);
 
-	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 
@@ -158,7 +169,7 @@ void deleteMidiAction(MidiChannel* ch, const m::Action* a)
 	mr::deleteAction(a->next);
 	mr::deleteAction(a);
 
-	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -168,9 +179,6 @@ void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocit
 	Frame f1, Frame f2)
 {
 	namespace mr = m::recorder;
-
-	//if (!::canFit())
-	//	return; 
 
 	mr::deleteAction(a->next);
 	mr::deleteAction(a);
@@ -197,7 +205,7 @@ void recordSampleAction(const SampleChannel* ch, int type, Frame f1, Frame f2)
 		mr::rec(ch->index, f1, e1, nullptr);
 	}
 	
-	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 
@@ -227,6 +235,8 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 	
 	namespace mr = m::recorder;
 
+	assert(value >= 0 && value <= G_MAX_VELOCITY);
+
 	m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, value);
 	
 	/* First action ever? Add actions at boundaries. Else, find action right
@@ -237,7 +247,7 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 		const m::Action* a1 = mr::rec(ch->index, 0, e1, nullptr, nullptr);	
 		const m::Action* a2 = mr::rec(ch->index, frame, e2, nullptr, nullptr);
 		const m::Action* a3 = mr::rec(ch->index, m::clock::getFramesInLoop() - 1, e1, nullptr, nullptr);
-		mr::updateSiblings(a1, nullptr, a2);
+		mr::updateSiblings(a1, a3, a2);
 		mr::updateSiblings(a2, a1, a3);
 		mr::updateSiblings(a3, a2, a1);
 	}
@@ -249,7 +259,7 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 		mr::rec(ch->index, frame, e2, a1, a3);
 	}
 
-	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 
@@ -262,9 +272,12 @@ void deleteEnvelopeAction(Channel* ch, const m::Action* a)
 
 	assert(a != nullptr);
 
-	/* Can't delete boundary actions. */
-	if (a->prev == nullptr || a->next == nullptr)
+	/* Delete a boundary action wipes out everything. */
+
+	if (isBoundaryEnvelopeAction_(a)) {
+		mr::clearActions(ch->index, a->event.getStatus());
 		return;
+	}
 
 	const m::Action* a1 = a->prev;
 	const m::Action* a3 = a->next; 
@@ -276,7 +289,7 @@ void deleteEnvelopeAction(Channel* ch, const m::Action* a)
 	mr::updateSiblings(a1, a1->prev, a3);
 	mr::updateSiblings(a3, a1, a3->next);
 
-	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 
@@ -294,14 +307,14 @@ void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value)
 
 	int type = a->event.getStatus();
 
-	if (a->prev == nullptr || a->next == nullptr)
+	if (isBoundaryEnvelopeAction_(a))
 		mr::updateEvent(a, m::MidiEvent(type, 0, value));
 	else {
 		deleteEnvelopeAction(ch, a);
 		recordEnvelopeAction(ch, type, frame, value); 
 	}
 
-	updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);	
+	updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);	
 }
 
 
@@ -322,7 +335,7 @@ void deleteSampleAction(SampleChannel* ch, const m::Action* a)
 	}
 	mr::deleteAction(a);
 
-  updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+  updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 

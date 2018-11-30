@@ -220,11 +220,11 @@ void clearChannel(int channel)
 /* -------------------------------------------------------------------------- */
 
 
-void clearActions(int channel, ActionType t)
+void clearActions(int channel, int type)
 {
 	removeIf_([=](const Action* a)
 	{ 
-		return a->channel == channel && a->event.getStatus() == static_cast<int>(t);
+		return a->channel == channel && a->event.getStatus() == type;
 	});
 }
 
@@ -303,6 +303,8 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev,
 		const_cast<Action*>(next)->prev = curr;
 	
 	trylock_([&](){ actions = std::move(temp); });
+
+debug();
 
 	return curr;
 }
@@ -485,7 +487,7 @@ void readPatch(const vector<patch::action_t>& pactions)
 			nullptr, 
 			nullptr 
 		});
-		if (actionId < paction.id) actionId = paction.id; // Update id generator
+		if (actionId <= paction.id) actionId = paction.id + 1; // Update id generator
 	}
 
 	/* Second pass: fill in previous and next actions, if any. */

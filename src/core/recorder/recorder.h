@@ -65,7 +65,7 @@ void clearChannel(int channel);
 /* clearActions
 Clears the actions by type from a channel. */
 
-void clearActions(int channel, ActionType t);
+void clearActions(int channel, int type);
 
 /* deleteAction
 Deletes a specific action. */

@@ -189,7 +189,8 @@ void processData_(SampleChannel* ch, m::AudioBuffer& out, const m::AudioBuffer& 
 	bool running)
 {
 	assert(out.countSamples() == ch->buffer.countSamples());
-	assert(in.countSamples()  == ch->buffer.countSamples());
+	if (in.isAllocd())
+		assert(in.countSamples() == ch->buffer.countSamples());
 
 	/* If armed and input buffer is not empty (i.e. input device available) and
 	input monitor is on, copy input buffer to channel buffer: this enables the 

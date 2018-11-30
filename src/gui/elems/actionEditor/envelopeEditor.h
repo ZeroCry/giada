@@ -58,7 +58,7 @@ private:
 
 	Pixel frameToX(Frame frame) const;
 	Pixel valueToY(int value) const;
-	int   yToValue(Pixel pixel) const;
+	int   yToValue(Pixel pixel, Pixel offset=0) const;
 
 	bool isFirstPoint() const;
 	bool isLastPoint()  const;
