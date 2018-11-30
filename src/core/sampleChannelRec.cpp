@@ -97,14 +97,11 @@ void calcVolumeEnv_(SampleChannel* ch, const Action* a1)
 
 	const Action* a2 = a1->next;
 
-	float vf1 = u::math::map<int, float>(a1->event.getVelocity(), 0, G_MAX_VELOCITY, 0, 1.0);
-	float vf2 = u::math::map<int, float>(a2->event.getVelocity(), 0, G_MAX_VELOCITY, 0, 1.0);
+	double vf1 = u::math::map<int, double>(a1->event.getVelocity(), 0, G_MAX_VELOCITY, 0, 1.0);
+	double vf2 = u::math::map<int, double>(a2->event.getVelocity(), 0, G_MAX_VELOCITY, 0, 1.0);
 
 	ch->volume_i = vf1;
 	ch->volume_d = (vf2 - vf1) / (a2->frame - a1->frame);
-
-	printf("val=%f f=%d -> val=%f f=%d | d=%f\n", 
-		vf1, a1->frame, vf2, a2->frame, ch->volume_d);
 }
 
 

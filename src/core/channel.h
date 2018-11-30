@@ -196,7 +196,7 @@ public:
 	Pointer to a gChannel object, part of the GUI. TODO - remove this and send
 	signals instead. */
 
-  geChannel* guiChannel;
+	geChannel* guiChannel;
 
 	/* buffer
 	Working buffer for internal processing. */
@@ -229,23 +229,23 @@ public:
 	double volume_i;
 	double volume_d;
 	
-  bool hasActions;      // has something recorded
-  bool readActions;     // read what's recorded
-  
-  bool      midiIn;               // enable midi input
-  uint32_t  midiInKeyPress;
-  uint32_t  midiInKeyRel;
-  uint32_t  midiInKill;
-  uint32_t  midiInArm;
-  uint32_t  midiInVolume;
-  uint32_t  midiInMute;
-  uint32_t  midiInSolo;
+	bool hasActions;      // has something recorded
+	bool readActions;     // read what's recorded
 
-  /* midiInFilter
-  Which MIDI channel should be filtered out when receiving MIDI messages. -1
-  means 'all'. */
+	bool      midiIn;               // enable midi input
+	uint32_t  midiInKeyPress;
+	uint32_t  midiInKeyRel;
+	uint32_t  midiInKill;
+	uint32_t  midiInArm;
+	uint32_t  midiInVolume;
+	uint32_t  midiInMute;
+	uint32_t  midiInSolo;
 
-  int midiInFilter;
+	/* midiInFilter
+	Which MIDI channel should be filtered out when receiving MIDI messages. -1
+	means 'all'. */
+
+	int midiInFilter;
 
 	/*  midiOutL*
 	 * Enable MIDI lightning output, plus a set of midi lighting event to be sent
@@ -253,12 +253,12 @@ public:
 	 * else gets stripped out. */
 
 	bool     midiOutL;
-  uint32_t midiOutLplaying;
-  uint32_t midiOutLmute;
-  uint32_t midiOutLsolo;
+	uint32_t midiOutLplaying;
+	uint32_t midiOutLmute;
+	uint32_t midiOutLsolo;
 
 #ifdef WITH_VST
-  std::vector <Plugin*> plugins;
+	std::vector <Plugin*> plugins;
 #endif
 
 protected:
