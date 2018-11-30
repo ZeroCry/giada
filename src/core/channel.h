@@ -226,8 +226,8 @@ public:
 	the delta during volume changes (or the line slope between two volume 
 	points). */
 	
-	float volume_i;
-	float volume_d;
+	double volume_i;
+	double volume_d;
 	
   bool hasActions;      // has something recorded
   bool readActions;     // read what's recorded

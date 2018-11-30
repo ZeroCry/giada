@@ -33,7 +33,7 @@
 #include "../core/clock.h"
 #include "../core/kernelMidi.h"
 #include "../core/channel.h"
-#include "../core/recorder.h"
+#include "../core/recorderHandler.h"
 #include "../core/recorder/recorder.h"
 #include "../core/action.h"
 #include "../core/mixer.h"
@@ -63,17 +63,6 @@ void updateChannel_(geChannel* gch, bool refreshActionEditor=true)
 	}
 	if (refreshActionEditor)
 		gu_refreshActionEditor(); // refresh a.editor window, it could be open
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-bool isBoundaryEnvelopeAction_(const m::Action* a)
-{
-	assert(a->prev != nullptr);
-	assert(a->next != nullptr);
-	return a->prev->frame > a->frame || a->next->frame < a->frame;
 }
 }; // {anonymous}
 
@@ -268,13 +257,14 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 
 void deleteEnvelopeAction(Channel* ch, const m::Action* a)
 {
-	namespace mr = m::recorder;
+	namespace mr  = m::recorder;
+	namespace mrh = m::recorderHandler;
 
 	assert(a != nullptr);
 
 	/* Delete a boundary action wipes out everything. */
 
-	if (isBoundaryEnvelopeAction_(a)) {
+	if (mrh::isBoundaryEnvelopeAction(a)) {
 		mr::clearActions(ch->index, a->event.getStatus());
 		return;
 	}
@@ -298,7 +288,8 @@ void deleteEnvelopeAction(Channel* ch, const m::Action* a)
 
 void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value)
 {
-	namespace mr = m::recorder;
+	namespace mr  = m::recorder;
+	namespace mrh = m::recorderHandler;
 
 	assert(a != nullptr);
 
@@ -307,7 +298,7 @@ void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value)
 
 	int type = a->event.getStatus();
 
-	if (isBoundaryEnvelopeAction_(a))
+	if (mrh::isBoundaryEnvelopeAction(a))
 		mr::updateEvent(a, m::MidiEvent(type, 0, value));
 	else {
 		deleteEnvelopeAction(ch, a);

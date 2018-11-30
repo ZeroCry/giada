@@ -34,7 +34,7 @@ sourcesCore =                            \
 	src/core/conf.cpp                      \
 	src/core/kernelAudio.h                 \
 	src/core/kernelAudio.cpp               \
-	src/core/pluginHost.h		               \
+	src/core/pluginHost.h		           \
 	src/core/pluginHost.cpp                \
 	src/core/mixerHandler.h                \
 	src/core/mixerHandler.cpp              \
@@ -54,6 +54,8 @@ sourcesCore =                            \
 	src/core/patch.cpp                     \
 	src/core/recorder.h                    \
 	src/core/recorder.cpp                  \
+	src/core/recorderHandler.h             \
+	src/core/recorderHandler.cpp           \
 	src/core/recorder/recorder.h           \
 	src/core/recorder/recorder.cpp         \
 	src/core/mixer.h                       \
