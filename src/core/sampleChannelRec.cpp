@@ -100,7 +100,7 @@ void calcVolumeEnv_(SampleChannel* ch, const Action* a1)
 	float vf2 = u::math::map<int, float>(a2->event.getVelocity(), 0, G_MAX_VELOCITY, 0, 1.0);
 
 	ch->volume_i = vf1;
-	ch->volume_d = ((vf2 - vf1) / (a2->frame - a1->frame)) * 1.003f;
+	ch->volume_d = ((vf2 - vf1) / (a2->frame - a1->frame));
 }
 
 
