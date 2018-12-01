@@ -137,14 +137,7 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 
 	for (auto& kv : actions) {
 		Frame frame = f(kv.first);
-
-		/* The value is the original array of actions stored in the old map. An
-		update to all actions is required. Don't copy the vector, move it: we want
-		to keep the original references. */
-
-		/* TODO this is wrong! you are moving things from the real ActionMap,
-		race condition might kick in! */
-		temp[frame] = std::move(kv.second);
+		temp[frame] = kv.second;  // Copy
 		for (const Action* action : temp[frame])
 			const_cast<Action*>(action)->frame = frame;
 	}
@@ -246,7 +239,7 @@ void deleteAction(const Action* target)
 void updateEvent(const Action* a, MidiEvent e)
 {
 	assert(a != nullptr);
-	const_cast<Action*>(a)->event = e;
+	trylock_([&] { const_cast<Action*>(a)->event = e; });
 }
 
 
@@ -256,8 +249,11 @@ void updateEvent(const Action* a, MidiEvent e)
 void updateSiblings(const Action* a, const Action* prev, const Action* next)
 {
 	assert(a != nullptr);
-	const_cast<Action*>(a)->prev = prev;
-	const_cast<Action*>(a)->next = next;
+	trylock_([&] 
+	{ 
+		const_cast<Action*>(a)->prev = prev;
+		const_cast<Action*>(a)->next = next;
+	});
 }
 
 
