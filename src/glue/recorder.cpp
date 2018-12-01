@@ -64,6 +64,19 @@ void updateChannel_(geChannel* gch, bool refreshActionEditor=true)
 	if (refreshActionEditor)
 		gu_refreshActionEditor(); // refresh a.editor window, it could be open
 }
+
+
+/* -------------------------------------------------------------------------- */
+
+
+Frame fixVerticalEnvActions_(Frame f, const m::Action* a1, const m::Action* a2)
+{
+	if      (a1->frame == f) f += 1;
+	else if (a2->frame == f) f -= 1;
+	if (a1->frame == f || a2->frame == f)
+		return -1;
+	return f;
+}
 }; // {anonymous}
 
 
@@ -219,9 +232,6 @@ void updateSampleAction(SampleChannel* ch, const m::Action* a, int type, Frame f
 
 void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 {
-	/* TODO - this function assumes we are working with ENVELOPE events. This
-	should be generalized. */
-	
 	namespace mr = m::recorder;
 
 	assert(value >= 0 && value <= G_MAX_VELOCITY);
@@ -229,23 +239,26 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 	m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, value);
 	
 	/* First action ever? Add actions at boundaries. Else, find action right
-	before frame 'f' and inject a new action in there. */
+	before frame 'f' and inject a new action in there. Vertical envelope points 
+	are forbidden for now. */
 
 	if (!mr::hasActions(ch->index, type)) {
 		m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, G_MAX_VELOCITY);
 		const m::Action* a1 = mr::rec(ch->index, 0, e1, nullptr, nullptr);	
 		const m::Action* a2 = mr::rec(ch->index, frame, e2, nullptr, nullptr);
 		const m::Action* a3 = mr::rec(ch->index, m::clock::getFramesInLoop() - 1, e1, nullptr, nullptr);
-		mr::updateSiblings(a1, a3, a2);
+		mr::updateSiblings(a1, a3, a2); // Circular loop (begin)
 		mr::updateSiblings(a2, a1, a3);
-		mr::updateSiblings(a3, a2, a1);
+		mr::updateSiblings(a3, a2, a1); // Circular loop (end)
 	}
 	else {
-		const m::Action* a1 = mr::getActionInFrameRange(ch->index, frame, m::MidiEvent::ENVELOPE);
+		const m::Action* a1 = mr::getClosestAction(ch->index, frame, m::MidiEvent::ENVELOPE);
 		const m::Action* a3 = a1->next;
 		assert(a1 != nullptr);
 		assert(a3 != nullptr);
-		mr::rec(ch->index, frame, e2, a1, a3);
+		frame = fixVerticalEnvActions_(frame, a1, a3);
+		if (frame != -1)
+			mr::rec(ch->index, frame, e2, a1, a3);
 	}
 
 	updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);

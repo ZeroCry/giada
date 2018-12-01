@@ -121,12 +121,15 @@ mandatory. */
 
 void updateSamplerate(int systemRate, int patchRate);
 
-void expand(int old_fpb, int new_fpb);
-void shrink(int new_fpb);
+/* getActionsOnFrame
+Returns a vector of actions on frame 'f'. */
 
 std::vector<const Action*> getActionsOnFrame(Frame f);
 
-const Action* getActionInFrameRange(int channel, Frame f, int type);
+/* getClosestAction
+Given a frame 'f' returns the closest action. */
+
+const Action* getClosestAction(int channel, Frame f, int type);
 
 std::vector<const Action*> getActionsOnChannel(int channel);
 

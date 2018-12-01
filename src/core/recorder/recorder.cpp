@@ -304,7 +304,7 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev,
 	
 	trylock_([&](){ actions = std::move(temp); });
 
-debug();
+//debug();
 
 	return curr;
 }
@@ -360,45 +360,6 @@ void updateSamplerate(int systemRate, int patchRate)
 /* -------------------------------------------------------------------------- */
 
 
-void expand(int old_fpb, int new_fpb)
-{
-	/* This algorithm requires multiple passages if we expand from e.g. 2 to 16 
-	beats, precisely 16 / 2 - 1 = 7 times (-1 is the first group, which exists 
-	yet). If we expand by a non-multiple, the result is zero, due to float->int 
-	implicit cast. */
-#if 0
-	int pass = (int) (new_fpb / old_fpb) - 1;
-	if (pass == 0) pass = 1;
-
-	size_type init_fs = actions.size();
-
-	for (unsigned z=1; z<=pass; z++) {
-		for (unsigned i=0; i<init_fs; i++) {
-			unsigned newframe = frames.at(i) + (old_fpb*z);
-			frames.push_back(newframe);
-			global.push_back(actions);
-			for (unsigned k=0; k<global.at(i).size(); k++) {
-				action* a = global.at(i).at(k);
-				rec(a->chan, a->type, newframe, a->iValue, a->fValue);
-			}
-		}
-	}
-#endif
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void shrink(int new_fpb)
-{
-
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
 vector<const Action*> getActionsOnFrame(Frame frame)
 {
 	return actions.count(frame) ? actions[frame] : vector<const Action*>();
@@ -408,14 +369,14 @@ vector<const Action*> getActionsOnFrame(Frame frame)
 /* -------------------------------------------------------------------------- */
 
 
-const Action* getActionInFrameRange(int channel, Frame f, int type)
+const Action* getClosestAction(int channel, Frame f, int type)
 {
 	const Action* out = nullptr;
-	forEachAction([&] (const Action* a)
+	forEachAction([&](const Action* a)
 	{
 		if (a->event.getStatus() != type || a->channel != channel)
 			return;
-		if (out == nullptr || (a->frame < f && a->frame > out->frame))
+		if (out == nullptr || (a->frame <= f && a->frame > out->frame))
 			out = a;
 	});
 	return out;

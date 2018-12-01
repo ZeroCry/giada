@@ -38,14 +38,15 @@ namespace recorderHandler
 {
 bool isBoundaryEnvelopeAction(const Action* a);
 
+void expand(int old_fpb, int new_fpb);
+void shrink(int new_fpb);
+
 /* TODO - move here from ::recorder:
 
 void updateBpm(float oldval, float newval, int oldquanto);
 void updateSamplerate(int systemRate, int patchRate);
 void writePatch(int chanIndex, std::vector<patch::action_t>& pactions);
 void readPatch(const std::vector<patch::action_t>& pactions);
-void expand(int old_fpb, int new_fpb);
-void shrink(int new_fpb);
 */
 
 
