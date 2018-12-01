@@ -117,13 +117,12 @@ void readPlugins_(Channel* ch, const patch::channel_t& pch)
 /* -------------------------------------------------------------------------- */
 
 
-int create(ChannelType type, int bufferSize, bool inputMonitorOn, Channel** out)
+Channel* create(ChannelType type, int bufferSize, bool inputMonitorOn)
 {
 	if (type == ChannelType::SAMPLE)
-		*out = new SampleChannel(inputMonitorOn, bufferSize);
+		return new SampleChannel(inputMonitorOn, bufferSize);
 	else
-		*out = new MidiChannel(bufferSize);
-	return G_RES_OK;
+		return new MidiChannel(bufferSize);
 }
 
 

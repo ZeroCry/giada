@@ -42,7 +42,7 @@ namespace giada {
 namespace m {
 namespace channelManager
 {
-int create(ChannelType type, int bufferSize, bool inputMonitorOn, Channel** out);
+Channel* create(ChannelType type, int bufferSize, bool inputMonitorOn);
 
 int  writePatch(const Channel* ch, bool isProject);
 void writePatch(const SampleChannel* ch, bool isProject, int index);

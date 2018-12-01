@@ -261,7 +261,7 @@ void glue_loadPatch(void* data)
 		return;
 	}
 
-	/* Close all other windows. This prevents segfault if plugin windows GUIs are 
+	/* Close all other windows. This prevents problems if plugin windows are 
 	open. */
 
 	gu_closeAllSubwindows();
@@ -284,21 +284,17 @@ void glue_loadPatch(void* data)
 		for (const patch::channel_t& pch : patch::channels) {
 			if (pch.column == col.index) {
 				Channel* ch = c::channel::addChannel(pch.column, static_cast<ChannelType>(pch.type), pch.size);
-				ch->readPatch(basePath, k);
+				ch->readPatch(basePath, k++);
 			}
 			browser->setStatusBar(steps);
-			k++;
 		}
 	}
 
-	/* Prepare Mixer. */
+	/* Prepare Mixer and Recorder. The latter has to recompute the actions' 
+	positions if the current samplerate != patch samplerate.*/
 
 	mh::updateSoloCount();
 	mh::readPatch();
-
-	/* Let recorder recompute the actions' positions if the current 
-	samplerate != patch samplerate. */
-
 	recorderHandler::updateSamplerate(conf::samplerate, patch::samplerate);
 
 	/* Save patchPath by taking the last dir of the broswer, in order to reuse it 
