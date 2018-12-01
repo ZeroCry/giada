@@ -25,9 +25,7 @@
  * -------------------------------------------------------------------------- */
 
 
-#include <map>
 #include <memory>
-#include <vector>
 #include <algorithm>
 #include <cassert>
 #include "../../utils/log.h"
@@ -44,8 +42,6 @@ namespace giada {
 namespace m {
 namespace recorder
 {
-using ActionMap = map<Frame, vector<const Action*>>;
-
 namespace
 {
 /* actions
@@ -64,18 +60,12 @@ int              actionId   = 0;
 /* -------------------------------------------------------------------------- */
 
 
-void trylock_(std::function<void()> f)
+void lock_(std::function<void()> f)
 {
 	assert(mixerMutex != nullptr);
 	pthread_mutex_lock(mixerMutex);
 	f();
 	pthread_mutex_unlock(mixerMutex);
-	/*
-	while (pthread_mutex_trylock(mixerMutex) == 0) {
-		f();
-		pthread_mutex_unlock(mixerMutex);
-		break;
-	}*/
 }
 
 
@@ -116,20 +106,7 @@ void removeIf_(std::function<bool(const Action*)> f)
 	}
 	optimize_(temp);
 
-	trylock_([&](){ actions = std::move(temp); });
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-const Action* getActionById_(int id, const ActionMap& source)
-{
-	for (auto& kv : source)
-		for (const Action* action : kv.second)
-			if (action->id == id)
-				return action;
-	return nullptr;
+	lock_([&](){ actions = std::move(temp); });
 }
 } // {anonymous}
 
@@ -217,7 +194,7 @@ void updateKeyFrames(std::function<Frame(Frame old)> f)
 	
 	ActionMap temp;
 
-	trylock_([&]()
+	lock_([&]()
 	{ 
 		for (auto& kv : actions) {
 			Frame frame = f(kv.first);
@@ -237,7 +214,7 @@ void updateKeyFrames(std::function<Frame(Frame old)> f)
 void updateEvent(const Action* a, MidiEvent e)
 {
 	assert(a != nullptr);
-	trylock_([&] { const_cast<Action*>(a)->event = e; });
+	lock_([&] { const_cast<Action*>(a)->event = e; });
 }
 
 
@@ -247,11 +224,20 @@ void updateEvent(const Action* a, MidiEvent e)
 void updateSiblings(const Action* a, const Action* prev, const Action* next)
 {
 	assert(a != nullptr);
-	trylock_([&] 
+	lock_([&] 
 	{ 
 		const_cast<Action*>(a)->prev = prev;
 		const_cast<Action*>(a)->next = next;
 	});
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void updateActionMap(ActionMap&& am)
+{
+	lock_([&](){ actions = am; });
 }
 
 
@@ -298,7 +284,7 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev,
 	if (next != nullptr)
 		const_cast<Action*>(next)->prev = curr;
 	
-	trylock_([&](){ actions = std::move(temp); });
+	lock_([&](){ actions = std::move(temp); });
 
 	return curr;
 }
@@ -333,6 +319,12 @@ const Action* getClosestAction(int channel, Frame f, int type)
 /* -------------------------------------------------------------------------- */
 
 
+ActionMap getActionMap() { return actions; }
+
+
+/* -------------------------------------------------------------------------- */
+
+
 vector<const Action*> getActionsOnChannel(int channel)
 {
 	vector<const Action*> out;
@@ -353,71 +345,6 @@ void forEachAction(std::function<void(const Action*)> f)
 	for (auto& kv : actions)
 		for (const Action* action : kv.second)
 			f(action);
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void writePatch(int chanIndex, std::vector<patch::action_t>& pactions)
-{
-	forEachAction([&] (const Action* a) 
-	{
-		if (a->channel != chanIndex) 
-			return;
-		pactions.push_back(patch::action_t { 
-			a->id, 
-			a->channel, 
-			a->frame, 
-			a->event.getRaw(), 
-			a->prev != nullptr ? a->prev->id : -1,
-			a->next != nullptr ? a->next->id : -1
-		});
-	});
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void readPatch(const vector<patch::action_t>& pactions)
-{
-	ActionMap temp = actions;
-
-	/* First pass: add actions with no relationship (no prev/next). */
-
-	for (const patch::action_t paction : pactions) {
-		temp[paction.frame].push_back(new Action{ 
-			paction.id, 
-			paction.channel, 
-			paction.frame, 
-			MidiEvent(paction.event), 
-			-1, // No plug-in data so far
-			-1, // No plug-in data so far
-			nullptr, 
-			nullptr 
-		});
-		if (actionId <= paction.id) actionId = paction.id + 1; // Update id generator
-	}
-
-	/* Second pass: fill in previous and next actions, if any. */
-
-	for (const patch::action_t paction : pactions) {
-		if (paction.next == -1 && paction.prev == -1) 
-			continue;
-		Action* curr = const_cast<Action*>(getActionById_(paction.id, temp));
-		assert(curr != nullptr);
-		if (paction.next != -1) {
-			curr->next = getActionById_(paction.next, temp);
-			assert(curr->next != nullptr);
-		}
-		if (paction.prev != -1) {
-			curr->prev = getActionById_(paction.prev, temp);
-			assert(curr->prev != nullptr);
-		}
-	}
-
-	trylock_([&](){ actions = std::move(temp); });
 }
 
 }}}; // giada::m::recorder::

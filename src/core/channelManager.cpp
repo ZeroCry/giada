@@ -38,7 +38,7 @@
 #include "pluginHost.h"
 #include "plugin.h"
 #include "action.h"
-#include "recorder/recorder.h"
+#include "recorderHandler.h"
 #include "channelManager.h"
 
 
@@ -76,7 +76,7 @@ void writePlugins_(const Channel* ch, patch::channel_t& pch)
 
 void readActions_(Channel* ch, const patch::channel_t& pch)
 {
-	recorder::readPatch(pch.actions);
+	recorderHandler::readPatch(pch.actions);
 	ch->hasActions = pch.actions.size() > 0;
 }
 
@@ -157,7 +157,7 @@ int writePatch(const Channel* ch, bool isProject)
 	pch.midiOutLmute    = ch->midiOutLmute;
 	pch.midiOutLsolo    = ch->midiOutLsolo;
 
-	recorder::writePatch(ch->index, pch.actions);
+	recorderHandler::writePatch(ch->index, pch.actions);
 	writePlugins_(ch, pch);
 
 	patch::channels.push_back(pch);

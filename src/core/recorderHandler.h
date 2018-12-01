@@ -29,6 +29,9 @@
 #define G_RECORDER_HANDLER_H
 
 
+#include "patch.h"
+
+
 namespace giada {
 namespace m 
 {
@@ -50,11 +53,8 @@ mandatory. */
 
 void updateSamplerate(int systemRate, int patchRate);
 
-/* TODO - move here from ::recorder:
 void writePatch(int chanIndex, std::vector<patch::action_t>& pactions);
 void readPatch(const std::vector<patch::action_t>& pactions);
-*/
-
 
 }}}; // giada::m::recorderHandler::
 

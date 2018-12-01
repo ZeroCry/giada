@@ -29,10 +29,10 @@
 #define G_RECORDER_H
 
 
+#include <map>
 #include <vector>
 #include <functional>
 #include "../types.h"
-#include "../patch.h"
 #include "../midiEvent.h"
 
 
@@ -46,6 +46,8 @@ class Action;
 
 namespace recorder
 {
+using ActionMap = std::map<Frame, std::vector<const Action*>>;
+
 void debug();
 /* init
 Initializes the recorder: everything starts from here. */
@@ -72,16 +74,26 @@ Deletes a specific action. */
 
 void deleteAction(const Action* a);
 
-/* updateKeyFrames_
+/* updateKeyFrames
 Update all the key frames in the internal map of actions, according to a lambda 
 function 'f'. */
 
 void updateKeyFrames(std::function<Frame(Frame old)> f);
 
+/* updateActionMap
+Replaces the current map of actions with a new one. Warning: 'am' will be moved
+as a replacement (no copy). */
+
+void updateActionMap(ActionMap&& am);
+
 /* updateEvent
 Changes the event in action 'a'. */
 
 void updateEvent(const Action* a, MidiEvent e);
+
+/* updateSiblings
+Changes previous and next actions in action 'a'. Mostly used for chained actions
+such as envelopes. */
 
 void updateSiblings(const Action* a, const Action* prev, const Action* next);
 
@@ -99,7 +111,7 @@ void enable();
 void disable();
 
 /* rec
-Records an action. */
+Records an action and returns it. */
 
 const Action* rec(int channel, Frame frame, MidiEvent e, const Action* prev, 
     const Action* next=nullptr);
@@ -110,20 +122,26 @@ Applies a read-only callback on each action recorded. */
 void forEachAction(std::function<void(const Action*)> f);
 
 /* getActionsOnFrame
-Returns a vector of actions on frame 'f'. */
+Returns a vector of actions recorded on frame 'f'. */
 
 std::vector<const Action*> getActionsOnFrame(Frame f);
+
+/* getActionsOnChannel
+Returns a vector of actions belonging to channel 'ch'. */
+
+std::vector<const Action*> getActionsOnChannel(int ch);
 
 /* getClosestAction
 Given a frame 'f' returns the closest action. */
 
 const Action* getClosestAction(int channel, Frame f, int type);
 
-std::vector<const Action*> getActionsOnChannel(int channel);
+/* getActionMap
+Returns a copy of the internal action map. Used only by recorderHandler. */
 
-void writePatch(int chanIndex, std::vector<patch::action_t>& pactions);
-void readPatch(const std::vector<patch::action_t>& pactions);
+ActionMap getActionMap();
 
 }}}; // giada::m::recorder::
+
 
 #endif

@@ -36,6 +36,24 @@ namespace giada {
 namespace m {
 namespace recorderHandler
 {
+namespace
+{
+const Action* getActionById_(int id, const recorder::ActionMap& source)
+{
+    for (auto& kv : source)
+        for (const Action* action : kv.second)
+            if (action->id == id)
+                return action;
+    return nullptr;
+}
+} // {anonymous}
+
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+
 bool isBoundaryEnvelopeAction(const Action* a)
 {
     assert(a->prev != nullptr);
@@ -79,6 +97,71 @@ void updateSamplerate(int systemRate, int patchRate)
     recorder::updateKeyFrames([=](Frame old) { return floorf(old * ratio); });
 }
 
+
+/* -------------------------------------------------------------------------- */
+
+
+void writePatch(int chanIndex, std::vector<patch::action_t>& pactions)
+{
+    recorder::forEachAction([&] (const Action* a) 
+    {
+        if (a->channel != chanIndex) 
+            return;
+        pactions.push_back(patch::action_t { 
+            a->id, 
+            a->channel, 
+            a->frame, 
+            a->event.getRaw(), 
+            a->prev != nullptr ? a->prev->id : -1,
+            a->next != nullptr ? a->next->id : -1
+        });
+    });
+}
+
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void readPatch(const std::vector<patch::action_t>& pactions)
+{
+    recorder::ActionMap temp = recorder::getActionMap();
+
+    /* First pass: add actions with no relationship (no prev/next). */
+
+    for (const patch::action_t paction : pactions) {
+        temp[paction.frame].push_back(new Action{ 
+            paction.id, 
+            paction.channel, 
+            paction.frame, 
+            MidiEvent(paction.event), 
+            -1, // No plug-in data so far
+            -1, // No plug-in data so far
+            nullptr, 
+            nullptr 
+        });
+        // ---------------------> if (actionId <= paction.id) actionId = paction.id + 1; // Update id generator
+    }
+
+    /* Second pass: fill in previous and next actions, if any. */
+
+    for (const patch::action_t paction : pactions) {
+        if (paction.next == -1 && paction.prev == -1) 
+            continue;
+        Action* curr = const_cast<Action*>(getActionById_(paction.id, temp));
+        assert(curr != nullptr);
+        if (paction.next != -1) {
+            curr->next = getActionById_(paction.next, temp);
+            assert(curr->next != nullptr);
+        }
+        if (paction.prev != -1) {
+            curr->prev = getActionById_(paction.prev, temp);
+            assert(curr->prev != nullptr);
+        }
+    }
+
+    recorder::updateActionMap(std::move(temp));
+}
 }}}; // giada::m::recorderHandler::
 
 
