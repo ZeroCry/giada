@@ -28,6 +28,7 @@
 #include "../core/mixer.h"
 #include "../core/mixerHandler.h"
 #include "../core/channel.h"
+#include "../core/recorderHandler.h"
 #include "../core/pluginHost.h"
 #include "../core/plugin.h"
 #include "../core/conf.h"
@@ -298,7 +299,7 @@ void glue_loadPatch(void* data)
 	/* Let recorder recompute the actions' positions if the current 
 	samplerate != patch samplerate. */
 
-	recorder_DEPR_::updateSamplerate(conf::samplerate, patch::samplerate);
+	recorderHandler::updateSamplerate(conf::samplerate, patch::samplerate);
 
 	/* Save patchPath by taking the last dir of the broswer, in order to reuse it 
 	the next time. */

@@ -123,32 +123,6 @@ void removeIf_(std::function<bool(const Action*)> f)
 /* -------------------------------------------------------------------------- */
 
 
-/* updateKeyFrames_
-Generates a copy (actually, a move) of the original map of actions by updating
-the key frames in it, according to an external lambda function f. */
-
-void updateKeyFrames_(std::function<Frame(Frame old)> f)
-{
-	/* TODO - This algorithm might be slow as f**k. Instead of updating keys in
-	the existing map, we create a temporary map with the updated keys. Then we 
-	swap it with the original one (moved, not copied). */
-	
-	ActionMap temp;
-
-	for (auto& kv : actions) {
-		Frame frame = f(kv.first);
-		temp[frame] = kv.second;  // Copy
-		for (const Action* action : temp[frame])
-			const_cast<Action*>(action)->frame = frame;
-	}
-
-	trylock_([&](){ actions = std::move(temp); });
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
 const Action* getActionById_(int id, const ActionMap& source)
 {
 	for (auto& kv : source)
@@ -236,6 +210,30 @@ void deleteAction(const Action* target)
 /* -------------------------------------------------------------------------- */
 
 
+void updateKeyFrames(std::function<Frame(Frame old)> f)
+{
+	/* This stuff must be performed in a lock, because we are moving the vector
+	of actions from the real ActionMap to the temporary one. */
+	
+	ActionMap temp;
+
+	trylock_([&]()
+	{ 
+		for (auto& kv : actions) {
+			Frame frame = f(kv.first);
+			temp[frame] = std::move(kv.second);  // Move std::vector<Action*>
+			for (const Action* action : temp[frame])
+				const_cast<Action*>(action)->frame = frame;
+			gu_log("[recorder::updateKeyFrames] %d -> %d\n", kv.first, frame);
+		}
+		actions = std::move(temp); 
+	});
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 void updateEvent(const Action* a, MidiEvent e)
 {
 	assert(a != nullptr);
@@ -302,56 +300,7 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev,
 	
 	trylock_([&](){ actions = std::move(temp); });
 
-//debug();
-
 	return curr;
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-bool canFit(int channel, MidiEvent e, Frame f1, Frame f2)
-{
-	// TODO
-	assert(false);
-	return true;
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void updateBpm(float oldval, float newval, int oldquanto)
-{
-	updateKeyFrames_([=](Frame old) 
-	{
-		/* The division here cannot be precise. A new frame can be 44099 and the 
-		quantizer set to 44100. That would mean two recs completely useless. So we 
-		compute a reject value ('scarto'): if it's lower than 6 frames the new frame 
-		is collapsed with a quantized frame. FIXME - maybe 6 frames are too low. */
-		Frame frame = (old / newval) * oldval;
-		if (frame != 0) {
-			Frame delta = oldquanto % frame;
-			if (delta > 0 && delta <= 6)
-				frame = frame + delta;
-		}
-		return frame;
-	});
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void updateSamplerate(int systemRate, int patchRate)
-{
-	if (systemRate == patchRate)
-		return;
-
-	float ratio = systemRate / (float) patchRate;
-
-	updateKeyFrames_([=](Frame old) { return floorf(old * ratio); });
 }
 
 
@@ -469,8 +418,6 @@ void readPatch(const vector<patch::action_t>& pactions)
 	}
 
 	trylock_([&](){ actions = std::move(temp); });
-
-debug();
 }
 
 }}}; // giada::m::recorder::

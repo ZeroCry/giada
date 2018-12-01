@@ -41,10 +41,19 @@ bool isBoundaryEnvelopeAction(const Action* a);
 void expand(int old_fpb, int new_fpb);
 void shrink(int new_fpb);
 
-/* TODO - move here from ::recorder:
+/* updateBpm
+Changes actions position by calculating the new bpm value. */
 
 void updateBpm(float oldval, float newval, int oldquanto);
+
+/* updateSamplerate
+Changes actions position by taking in account the new samplerate. If 
+f_system == f_patch nothing will change, otherwise the conversion is 
+mandatory. */
+
 void updateSamplerate(int systemRate, int patchRate);
+
+/* TODO - move here from ::recorder:
 void writePatch(int chanIndex, std::vector<patch::action_t>& pactions);
 void readPatch(const std::vector<patch::action_t>& pactions);
 */

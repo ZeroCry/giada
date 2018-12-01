@@ -72,6 +72,12 @@ Deletes a specific action. */
 
 void deleteAction(const Action* a);
 
+/* updateKeyFrames_
+Update all the key frames in the internal map of actions, according to a lambda 
+function 'f'. */
+
+void updateKeyFrames(std::function<Frame(Frame old)> f);
+
 /* updateEvent
 Changes the event in action 'a'. */
 
@@ -85,7 +91,7 @@ Checks if the channel has at least one action recorded. */
 bool hasActions(int channel, int type=0);
 
 /* isActive
-Is recorder active? Call this one BEFORE rec(). */
+Is recorder recording something? */
 
 bool isActive();
 
@@ -98,28 +104,10 @@ Records an action. */
 const Action* rec(int channel, Frame frame, MidiEvent e, const Action* prev, 
     const Action* next=nullptr);
 
-/* canFit
-Tells if the action can fit the current layout. Call this before recording a 
-new action. */
-
-bool canFit(int channel, MidiEvent e, Frame f1, Frame f2=0);
-
 /* forEachAction
 Applies a read-only callback on each action recorded. */
 
 void forEachAction(std::function<void(const Action*)> f);
-
-/* updateBpm
-Changes actions position by calculating the new bpm value. */
-
-void updateBpm(float oldval, float newval, int oldquanto);
-
-/* updateSamplerate
-Changes actions position by taking in account the new samplerate. If 
-f_system == f_patch nothing will change, otherwise the conversion is 
-mandatory. */
-
-void updateSamplerate(int systemRate, int patchRate);
 
 /* getActionsOnFrame
 Returns a vector of actions on frame 'f'. */
