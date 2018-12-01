@@ -102,9 +102,6 @@ void calcVolumeEnv_(SampleChannel* ch, const Action* a1)
 
 	ch->volume_i = vf1;
 	ch->volume_d = a2->frame == a1->frame ? 0 : (vf2 - vf1) / (a2->frame - a1->frame);
-
-printf("val=%f f=%d -> val=%f f=%d | d=%f\n", 
-		vf1, a1->frame, vf2, a2->frame, ch->volume_d);
 }
 
 

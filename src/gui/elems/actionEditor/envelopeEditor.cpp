@@ -46,10 +46,9 @@ using std::vector;
 namespace giada {
 namespace v
 {
-geEnvelopeEditor::geEnvelopeEditor(Pixel x, Pixel y, int actionType, const char* l, 
+geEnvelopeEditor::geEnvelopeEditor(Pixel x, Pixel y, const char* l, 
 	SampleChannel* ch)
-:	geBaseActionEditor(x, y, 200, m::conf::envelopeEditorH, ch),	
-	m_actionType      (actionType)
+:	geBaseActionEditor(x, y, 200, m::conf::envelopeEditorH, ch)
 {
 	copy_label(l);
 	rebuild();
@@ -124,7 +123,7 @@ void geEnvelopeEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	for (const m::Action* a : cr::getEnvelopeActions(m_ch, m_actionType)) {
+	for (const m::Action* a : cr::getEnvelopeActions(m_ch)) {
 		if (a->event.getStatus() != m::MidiEvent::ENVELOPE)
 			continue;
 		add(new geEnvelopePoint(frameToX(a->frame), valueToY(a->event.getVelocity()), a)); 		
@@ -180,7 +179,7 @@ void geEnvelopeEditor::onAddAction()
 	Frame f = m_base->pixelToFrame(Fl::event_x() - x());
 	int   v = yToValue(Fl::event_y() - y());
 	
-	c::recorder::recordEnvelopeAction(m_ch, m_actionType, f, v);
+	c::recorder::recordEnvelopeAction(m_ch, f, v);
 	rebuild();
 }
 

@@ -45,11 +45,6 @@ class geEnvelopeEditor : public geBaseActionEditor
 {
 private:
 
-	/* m_actionType
-	What type of action this envelope editor is dealing with. */
-	
-	int m_actionType;
-
 	void onAddAction()     override;
 	void onDeleteAction()  override;
 	void onMoveAction()    override;
@@ -65,7 +60,7 @@ private:
 
 public:
 
-	geEnvelopeEditor(Pixel x, Pixel y, int actionType, const char* l, SampleChannel* ch);
+	geEnvelopeEditor(Pixel x, Pixel y, const char* l, SampleChannel* ch);
 	~geEnvelopeEditor();
 
 	void draw() override;

@@ -42,8 +42,15 @@ struct Action
 	int       channel;
 	Frame     frame;
 	MidiEvent event;
+    int       pluginIndex;
+    int       pluginParam;
 	const Action* prev;
 	const Action* next;
+
+    bool isVolumeEnvelope() const
+    { 
+        return event.getStatus() == MidiEvent::ENVELOPE && pluginIndex == -1; 
+    }
 };
 
 }} // giada::m::

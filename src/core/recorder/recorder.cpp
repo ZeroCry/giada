@@ -142,6 +142,8 @@ void updateKeyFrames_(std::function<Frame(Frame old)> f)
 		update to all actions is required. Don't copy the vector, move it: we want
 		to keep the original references. */
 
+		/* TODO this is wrong! you are moving things from the real ActionMap,
+		race condition might kick in! */
 		temp[frame] = std::move(kv.second);
 		for (const Action* action : temp[frame])
 			const_cast<Action*>(action)->frame = frame;
@@ -290,9 +292,9 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev,
 
 	/* If key frame doesn't exist yet, the [] operator in std::map is smart 
 	enough to insert a new item first. Then swap the temp map with the original 
-	one. */
+	one. No plug-in data for now. */
 	
-	temp[frame].push_back(new Action{ actionId++, channel, frame, event, prev, next });
+	temp[frame].push_back(new Action{ actionId++, channel, frame, event, -1, -1, prev, next });
 
 	/* Update linked actions, if any. */
 	
@@ -445,6 +447,8 @@ void readPatch(const vector<patch::action_t>& pactions)
 			paction.channel, 
 			paction.frame, 
 			MidiEvent(paction.event), 
+			-1, // No plug-in data so far
+			-1, // No plug-in data so far
 			nullptr, 
 			nullptr 
 		});

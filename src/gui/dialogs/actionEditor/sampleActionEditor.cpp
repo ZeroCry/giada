@@ -87,7 +87,7 @@ gdSampleActionEditor::gdSampleActionEditor(SampleChannel* ch)
 	viewport->add(ac);
 	viewport->add(new geResizerBar(ac->x(), ac->y()+ac->h(), viewport->w(), RESIZER_BAR_H, MIN_WIDGET_H));
 	
-	vc = new geEnvelopeEditor(viewport->x(), ac->y()+ac->h()+RESIZER_BAR_H, m::MidiEvent::ENVELOPE, "volume", ch);
+	vc = new geEnvelopeEditor(viewport->x(), ac->y()+ac->h()+RESIZER_BAR_H, "volume", ch);
 	viewport->add(vc);
 	viewport->add(new geResizerBar(vc->x(), vc->y()+vc->h(), viewport->w(), RESIZER_BAR_H, MIN_WIDGET_H));
 

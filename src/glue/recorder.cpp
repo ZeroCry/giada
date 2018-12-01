@@ -230,7 +230,7 @@ void updateSampleAction(SampleChannel* ch, const m::Action* a, int type, Frame f
 /* -------------------------------------------------------------------------- */
 
 
-void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
+void recordEnvelopeAction(Channel* ch, int frame, int value)
 {
 	namespace mr = m::recorder;
 
@@ -242,7 +242,7 @@ void recordEnvelopeAction(Channel* ch, int type, int frame, int value)
 	before frame 'f' and inject a new action in there. Vertical envelope points 
 	are forbidden for now. */
 
-	if (!mr::hasActions(ch->index, type)) {
+	if (!mr::hasActions(ch->index, m::MidiEvent::ENVELOPE)) {
 		m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, G_MAX_VELOCITY);
 		const m::Action* a1 = mr::rec(ch->index, 0, e1, nullptr, nullptr);	
 		const m::Action* a2 = mr::rec(ch->index, frame, e2, nullptr, nullptr);
@@ -275,9 +275,14 @@ void deleteEnvelopeAction(Channel* ch, const m::Action* a)
 
 	assert(a != nullptr);
 
-	/* Delete a boundary action wipes out everything. */
+	/* Delete a boundary action wipes out everything. If is volume, remember to
+	restore _i and _d members in channel. */
 
 	if (mrh::isBoundaryEnvelopeAction(a)) {
+		if (a->isVolumeEnvelope()) {
+			ch->volume_i = 1.0;
+			ch->volume_d = 0.0;
+		}
 		mr::clearActions(ch->index, a->event.getStatus());
 		return;
 	}
@@ -309,13 +314,11 @@ void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value)
 	/* Update the action directly if it is a boundary one. Else, delete the
 	previous one and record a new action. */
 
-	int type = a->event.getStatus();
-
 	if (mrh::isBoundaryEnvelopeAction(a))
-		mr::updateEvent(a, m::MidiEvent(type, 0, value));
+		mr::updateEvent(a, m::MidiEvent(m::MidiEvent::ENVELOPE, 0, value));
 	else {
 		deleteEnvelopeAction(ch, a);
-		recordEnvelopeAction(ch, type, frame, value); 
+		recordEnvelopeAction(ch, frame, value); 
 	}
 
 	updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);	
@@ -355,7 +358,7 @@ vector<const m::Action*> getSampleActions(const SampleChannel* ch)
 /* -------------------------------------------------------------------------- */
 
 
-vector<const m::Action*> getEnvelopeActions(const Channel* ch, int type)
+vector<const m::Action*> getEnvelopeActions(const Channel* ch)
 {
 	return m::recorder::getActionsOnChannel(ch->index);
 }
