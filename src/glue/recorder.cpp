@@ -334,15 +334,11 @@ void deleteSampleAction(SampleChannel* ch, const m::Action* a)
 
 	assert(a != nullptr);
 
-	/* if SINGLE_PRESS delete the keyrelease first. */
-
-	if (ch->mode == ChannelMode::SINGLE_PRESS) {
-		assert(a->next != nullptr);
+	if (a->next != nullptr) // For ChannelMode::SINGLE_PRESS combo
 		mr::deleteAction(a->next);
-	}
 	mr::deleteAction(a);
 
-  updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);
+	updateChannel_(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 

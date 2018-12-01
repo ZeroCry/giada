@@ -42,6 +42,7 @@
 #include "../core/kernelMidi.h"
 #include "../core/kernelAudio.h"
 #include "../core/recorder/recorder.h"
+#include "../core/recorderHandler.h"
 #include "../core/conf.h"
 #include "../core/const.h"
 #ifdef WITH_VST
@@ -73,7 +74,7 @@ void setBpm_(float f, string s)
 
 	float vPre = clock::getBpm();
 	clock::setBpm(f);
-	recorder_DEPR_::updateBpm(vPre, f, clock::getQuanto());
+	recorderHandler::updateBpm(vPre, f, clock::getQuanto());
 	mixer::allocVirtualInput(clock::getFramesInLoop());
 
 	gu_refreshActionEditor();
