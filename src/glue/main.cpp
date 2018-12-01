@@ -135,28 +135,17 @@ void glue_setBpm(float f)
 /* -------------------------------------------------------------------------- */
 
 
-void glue_setBeats(int beats, int bars, bool expand)
+void glue_setBeats(int beats, int bars)
 {
 	/* Never change this stuff while recording audio */
 
 	if (mixer::recording)
 		return;
 
-	/* Temp vars to store old data (they are necessary) */
-
-	int oldBeats = clock::getBeats();
-	unsigned oldTotalFrames = clock::getFramesInLoop();
-
 	clock::setBeats(beats);
 	clock::setBars(bars);
 	clock::updateFrameBars();
 	mixer::allocVirtualInput(clock::getFramesInLoop());
-
-	/* Update recorded actions, if 'expand' required and an expansion is taking
-	place. */
-
-	if (expand && clock::getBeats() > oldBeats)
-		recorder_DEPR_::expand(oldTotalFrames, clock::getFramesInLoop());
 
 	G_MainWin->mainTimer->setMeter(clock::getBeats(), clock::getBars());
 	gu_refreshActionEditor();  // in case the action editor is open
@@ -231,7 +220,7 @@ void glue_clearAllSamples()
 		ch->empty();
 		ch->guiChannel->reset();
 	}
-	recorder_DEPR_::init();
+	recorder::clearAll();
 	return;
 }
 
@@ -241,7 +230,7 @@ void glue_clearAllSamples()
 
 void glue_clearAllActions()
 {
-	recorder_DEPR_::init();
+	recorder::clearAll();
 	for (Channel* ch : mixer::channels)
 		ch->hasActions = false;
 	gu_updateControls();
@@ -276,15 +265,12 @@ void glue_resetToInitState(bool resetGui, bool createColumns)
 /* -------------------------------------------------------------------------- */
 
 
-/* never expand or shrink recordings (last param of setBeats = false):
- * this is live manipulation */
-
 void glue_beatsMultiply()
 {
-	glue_setBeats(clock::getBeats() * 2, clock::getBars(), false);
+	glue_setBeats(clock::getBeats() * 2, clock::getBars());
 }
 
 void glue_beatsDivide()
 {
-	glue_setBeats(clock::getBeats() / 2, clock::getBars(), false);
+	glue_setBeats(clock::getBeats() / 2, clock::getBars());
 }

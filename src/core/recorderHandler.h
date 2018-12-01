@@ -38,9 +38,6 @@ namespace recorderHandler
 {
 bool isBoundaryEnvelopeAction(const Action* a);
 
-void expand(int old_fpb, int new_fpb);
-void shrink(int new_fpb);
-
 /* updateBpm
 Changes actions position by calculating the new bpm value. */
 
