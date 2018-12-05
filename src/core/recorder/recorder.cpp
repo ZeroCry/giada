@@ -244,6 +244,16 @@ void updateActionMap(ActionMap&& am)
 /* -------------------------------------------------------------------------- */
 
 
+void updateActionId(int id)
+{
+	if (actionId <= id)  // Never decrease it
+		actionId = id;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 bool hasActions(int channel, int type)
 {
 	for (auto& kv : actions)
@@ -320,6 +330,8 @@ const Action* getClosestAction(int channel, Frame f, int type)
 
 
 ActionMap getActionMap() { return actions; }
+
+int getLatestActionId() { return actionId; }
 
 
 /* -------------------------------------------------------------------------- */

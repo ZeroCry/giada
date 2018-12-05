@@ -53,6 +53,12 @@ mandatory. */
 
 void updateSamplerate(int systemRate, int patchRate);
 
+/* cloneActions
+Clones actions in channel 'chanIndex', giving them a new channel index. Returns
+whether any action has been cloned. */
+
+bool cloneActions(int chanIndex, int newChanIndex);
+
 void writePatch(int chanIndex, std::vector<patch::action_t>& pactions);
 void readPatch(const std::vector<patch::action_t>& pactions);
 

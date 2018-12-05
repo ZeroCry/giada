@@ -101,6 +101,34 @@ void updateSamplerate(int systemRate, int patchRate)
 /* -------------------------------------------------------------------------- */
 
 
+bool cloneActions(int chanIndex, int newChanIndex)
+{
+    recorder::ActionMap temp = recorder::getActionMap();
+
+    bool cloned   = false;
+    int  actionId = recorder::getLatestActionId(); 
+
+    recorder::forEachAction([&](const Action* a) 
+    {
+        if (a->channel == chanIndex) {
+            Action* clone = new Action(*a);
+            clone->id      = ++actionId;
+            clone->channel = newChanIndex;
+            temp[clone->frame].push_back(clone);
+            cloned = true;
+        }
+    });
+
+    recorder::updateActionId(actionId);
+    recorder::updateActionMap(std::move(temp));
+
+    return cloned;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 void writePatch(int chanIndex, std::vector<patch::action_t>& pactions)
 {
     recorder::forEachAction([&] (const Action* a) 
@@ -140,7 +168,7 @@ void readPatch(const std::vector<patch::action_t>& pactions)
             nullptr, 
             nullptr 
         });
-        // ---------------------> if (actionId <= paction.id) actionId = paction.id + 1; // Update id generator
+        recorder::updateActionId(paction.id + 1);
     }
 
     /* Second pass: fill in previous and next actions, if any. */

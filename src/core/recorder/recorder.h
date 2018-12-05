@@ -97,6 +97,8 @@ such as envelopes. */
 
 void updateSiblings(const Action* a, const Action* prev, const Action* next);
 
+void updateActionId(int id);
+
 /* hasActions
 Checks if the channel has at least one action recorded. */
 
@@ -135,6 +137,10 @@ std::vector<const Action*> getActionsOnChannel(int ch);
 Given a frame 'f' returns the closest action. */
 
 const Action* getClosestAction(int channel, Frame f, int type);
+
+
+int getLatestActionId();
+
 
 /* getActionMap
 Returns a copy of the internal action map. Used only by recorderHandler. */
