@@ -47,7 +47,7 @@ namespace
 /* actions
 The big map of actions {frame : actions[]}. This belongs to Recorder, but it
 is often parsed by Mixer. So every "write" action performed on it (add, 
-remove, ...) must be guarded by a trylock on the mixerMutex. Until a proper
+remove, ...) must be guarded by a lock on the mixerMutex. Until a proper
 lock-free solution will be implemented. */
 
 ActionMap actions;
@@ -228,6 +228,8 @@ void updateSiblings(const Action* a, const Action* prev, const Action* next)
 	{ 
 		const_cast<Action*>(a)->prev = prev;
 		const_cast<Action*>(a)->next = next;
+		if (prev != nullptr) const_cast<Action*>(prev)->next = a;		
+		if (next != nullptr) const_cast<Action*>(next)->prev = a;	
 	});
 }
 

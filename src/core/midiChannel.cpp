@@ -31,10 +31,10 @@
 #include "midiChannelProc.h"
 #include "channelManager.h"
 #include "channel.h"
+#include "recorderHandler.h"
 #include "action.h"
 #include "patch.h"
 #include "const.h"
-#include "clock.h"
 #include "conf.h"
 #include "mixer.h"
 #include "pluginHost.h"
@@ -208,7 +208,8 @@ void MidiChannel::sendMidi(const Action* a, int localFrame)
 
 void MidiChannel::receiveMidi(const MidiEvent& midiEvent)
 {
-	namespace mr = m::recorder;
+	namespace mrh = m::recorderHandler;
+	namespace mr  = m::recorder;
 
 	if (!armed)
 		return;
@@ -222,17 +223,15 @@ void MidiChannel::receiveMidi(const MidiEvent& midiEvent)
 
 #ifdef WITH_VST
 
-	pthread_mutex_trylock(&pluginHost::mutex_midi);
-	gu_log("[MidiChannel::receiveMidi] msg=0x%X\n", midiEventFlat.getRaw());
+	pthread_mutex_lock(&pluginHost::mutex_midi);
 	addVstMidiEvent(midiEventFlat.getRaw(), 0);
 	pthread_mutex_unlock(&pluginHost::mutex_midi);
 
 #endif
 
 	if (mr::isActive()) {
-		assert(false); // TODO!!!
-		//mr::rec(index, clock::getCurrentFrame(), midiEventFlat.getRaw());
-		//hasActions = true;
+		mrh::recordLiveAction(index, midiEventFlat);
+		hasActions = true;
 	}
 }
 

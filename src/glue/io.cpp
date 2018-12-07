@@ -36,7 +36,7 @@
 #include "../utils/gui.h"
 #include "../utils/log.h"
 #include "../utils/math.h"
-#include "../core/recorder.h"
+#include "../core/recorder/recorder.h"
 #include "../core/kernelAudio.h"
 #include "../core/mixer.h"
 #include "../core/mixerHandler.h"
@@ -92,7 +92,7 @@ void keyRelease(Channel* ch, bool ctrl, bool shift)
 
 void startStopActionRec(bool gui)
 {
-	m::recorder_DEPR_::active ? stopActionRec(gui) : startActionRec(gui);
+	m::recorder::isActive() ? stopActionRec(gui) : startActionRec(gui);
 }
 
 
@@ -106,7 +106,7 @@ void startActionRec(bool gui)
 	if (kernelAudio::getStatus() == false)
 		return;
 
-	recorder_DEPR_::active = true;
+	m::recorder::enable();
 
 	if (!clock::isRunning())
 		glue_startSeq(false);  // update gui
@@ -124,13 +124,9 @@ void startActionRec(bool gui)
 
 void stopActionRec(bool gui)
 {
-	/* Stop the recorder and sort newly recorder actions. */
+	m::recorder::disable();
 
-	m::recorder_DEPR_::active = false;
-	m::recorder_DEPR_::sortActions();
-
-	for (Channel* ch : m::mixer::channels)
-	{
+	for (Channel* ch : m::mixer::channels) {
 		if (ch->type == ChannelType::MIDI)
 			continue;
 		G_MainWin->keyboard->setChannelWithActions(static_cast<geSampleChannel*>(ch->guiChannel));

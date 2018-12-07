@@ -29,6 +29,7 @@
 #include <cassert>
 #include "recorder/recorder.h"
 #include "action.h"
+#include "clock.h"
 #include "recorderHandler.h"
 
 
@@ -38,6 +39,12 @@ namespace recorderHandler
 {
 namespace
 {
+const Action* noteOn_ = nullptr;
+
+
+/* -------------------------------------------------------------------------- */
+
+
 const Action* getActionById_(int id, const recorder::ActionMap& source)
 {
     for (auto& kv : source)
@@ -45,6 +52,60 @@ const Action* getActionById_(int id, const recorder::ActionMap& source)
             if (action->id == id)
                 return action;
     return nullptr;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+/* isRingLoop_
+Ring loop: a composite action with key_press at frame N and key_release at 
+frame M, with M <= N. */
+
+bool isRingLoop_(Frame noteOffFrame)
+{
+    return noteOn_ != nullptr && noteOn_->frame > noteOffFrame;
+}
+
+/* isNullLoop_
+Null loop: a composite action that begins and ends on the very same frame, i.e. 
+with 0 size. Very unlikely. */
+
+bool isNullLoop_(Frame noteOffFrame)
+{
+    return noteOn_ != nullptr && noteOn_->frame == noteOffFrame;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void recordLiveNoteOn_(int channel, MidiEvent e)
+{
+    assert(noteOn_ == nullptr);
+    noteOn_ = recorder::rec(channel, clock::getCurrentFrame(), e, nullptr, nullptr);
+}
+
+
+void recordLiveNoteOff_(int channel, MidiEvent e)
+{
+    assert(noteOn_ != nullptr);
+
+    Frame frame = clock::getCurrentFrame(); 
+
+    /* If ring loop: record the note off at the end of the sequencer. If 
+    null loop: remove previous action and do nothing. */
+
+    if (isRingLoop_(frame))
+        frame = clock::getFramesInLoop();
+    
+    if (isNullLoop_(frame))
+        recorder::deleteAction(noteOn_);
+    else {
+        const Action* noteOff = recorder::rec(channel, frame, e, nullptr, nullptr);
+        recorder::updateSiblings(noteOff, noteOn_, nullptr);        
+    }
+
+    noteOn_ = nullptr;
 }
 } // {anonymous}
 
@@ -123,6 +184,20 @@ bool cloneActions(int chanIndex, int newChanIndex)
     recorder::updateActionMap(std::move(temp));
 
     return cloned;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+void recordLiveAction(int channel, MidiEvent e)
+{
+    if (!e.isNoteOnOff()) // Can't record other kind of events right now
+        return;
+    if (e.getStatus() == MidiEvent::NOTE_ON)
+        recordLiveNoteOn_(channel, e);
+    else
+        recordLiveNoteOff_(channel, e);
 }
 
 

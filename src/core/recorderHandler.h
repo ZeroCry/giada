@@ -29,6 +29,7 @@
 #define G_RECORDER_HANDLER_H
 
 
+#include "midiEvent.h"
 #include "patch.h"
 
 
@@ -59,8 +60,11 @@ whether any action has been cloned. */
 
 bool cloneActions(int chanIndex, int newChanIndex);
 
+void recordLiveAction(int channel, MidiEvent e);
+
 void writePatch(int chanIndex, std::vector<patch::action_t>& pactions);
 void readPatch(const std::vector<patch::action_t>& pactions);
+
 
 }}}; // giada::m::recorderHandler::
 
