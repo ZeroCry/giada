@@ -147,15 +147,14 @@ void recordKeyPressAction_(SampleChannel* ch)
 	if (!recorderCanRec_(ch))
 		return;
 
-	/* SINGLE_PRESS mode needs overdub. Also, disable reading actions while 
-	overdubbing. */
+	/* SINGLE_PRESS mode needs compound action. Also, disable reading actions 
+	while doing this. */
 	if (ch->mode == ChannelMode::SINGLE_PRESS) {
-		recorder_DEPR_::startOverdub(ch->index, G_ACTION_KEYS, clock::getCurrentFrame(),
-			kernelAudio::getRealBufSize());
+		recorderHandler::recCompoundAction(ch->index, MidiEvent(MidiEvent::NOTE_ON, 0, 0));
 		ch->readActions = false;
 	}
 	else
-		recorder_DEPR_::rec(ch->index, G_ACTION_KEYPRESS, clock::getCurrentFrame());
+		recorder::rec(ch->index, clock::getCurrentFrame(), MidiEvent(MidiEvent::NOTE_ON, 0, 0), nullptr);
 	ch->hasActions = true;
 }
 
@@ -224,9 +223,9 @@ bool recordStart(SampleChannel* ch, bool canQuantize)
 
 bool recordKill(SampleChannel* ch)
 {
-	/* Don't record G_ACTION_KILL actions for LOOP channels. */
+	/* Don't record NOTE_KILL actions for LOOP channels. */
 	if (recorderCanRec_(ch) && !ch->isAnyLoopMode()) {
-		recorder_DEPR_::rec(ch->index, G_ACTION_KILL, clock::getCurrentFrame());
+		recorder::rec(ch->index, clock::getCurrentFrame(), MidiEvent(MidiEvent::NOTE_KILL, 0, 0), nullptr);
 		ch->hasActions = true;
 	}
 	return true;
@@ -240,10 +239,8 @@ void recordStop(SampleChannel* ch)
 {
 	/* Record a stop event only if channel is SINGLE_PRESS. For any other mode 
 	the stop event is meaningless. */
-	if (recorderCanRec_(ch) && ch->mode == ChannelMode::SINGLE_PRESS) {
-		recorder_DEPR_::stopOverdub(clock::getCurrentFrame(), clock::getFramesInLoop(),
-			&mixer::mutex);
-	}
+	if (recorderCanRec_(ch) && ch->mode == ChannelMode::SINGLE_PRESS)
+		recorderHandler::recCompoundAction(ch->index, MidiEvent(MidiEvent::NOTE_OFF, 0, 0));
 }
 
 

@@ -35,7 +35,7 @@
 #include "../core/kernelMidi.h"
 #include "../core/mixerHandler.h"
 #include "../core/mixer.h"
-#include "../core/recorder.h"
+#include "../core/recorder/recorder.h"
 #include "transport.h"
 
 
@@ -67,9 +67,9 @@ void startSeq(bool gui)
 #endif
 
 	if (!gui) {
-    Fl::lock();
-    G_MainWin->mainTransport->updatePlay(1);
-    Fl::unlock();
+		Fl::lock();
+		G_MainWin->mainTransport->updatePlay(1);
+		Fl::unlock();
   }
 }
 
@@ -85,31 +85,31 @@ void stopSeq(bool gui)
 	kernelAudio::jackStop();
 #endif
 
-	/* what to do if we stop the sequencer and some action recs are active?
-	 * Deactivate the button and delete any 'rec on' status */
+	/* What to do if we stop the sequencer and some action recs are active?
+	Deactivate the button and delete any 'rec on' status. */
 
-	if (recorder_DEPR_::active) {
-		recorder_DEPR_::active = false;
-    Fl::lock();
-	  G_MainWin->mainTransport->updateRecAction(0);
-	  Fl::unlock();
+	if (recorder::isActive()) {
+		recorder::disable();
+		Fl::lock();
+		G_MainWin->mainTransport->updateRecAction(0);
+		Fl::unlock();
 	}
 
-	/* if input recs are active (who knows why) we must deactivate them.
-	 * One might stop the sequencer while an input rec is running. */
+	/* If input recs are active (who knows why) we must deactivate them. One 
+	might stop the sequencer while an input rec is running. */
 
 	if (mixer::recording) {
 		mh::stopInputRec();
-    Fl::lock();
-	  G_MainWin->mainTransport->updateRecInput(0);
-	  Fl::unlock();
+		Fl::lock();
+		G_MainWin->mainTransport->updateRecInput(0);
+		Fl::unlock();
 	}
 
 	if (!gui) {
-    Fl::lock();
-	  G_MainWin->mainTransport->updatePlay(0);
-	  Fl::unlock();
-  }
+		Fl::lock();
+		G_MainWin->mainTransport->updatePlay(0);
+		Fl::unlock();
+	}
 }
 
 
@@ -118,19 +118,19 @@ void stopSeq(bool gui)
 
 void rewindSeq(bool gui, bool notifyJack)
 {
-    mh::rewindSequencer();
+	mh::rewindSequencer();
 
-    /* FIXME - potential desync when Quantizer is enabled from this point on.
-    Mixer would wait, while the following calls would be made regardless of its
-    state. */
+	/* FIXME - potential desync when Quantizer is enabled from this point on.
+	Mixer would wait, while the following calls would be made regardless of its
+	state. */
 
 #ifdef __linux__
-    if (notifyJack)
-        kernelAudio::jackSetPosition(0);
+	if (notifyJack)
+		kernelAudio::jackSetPosition(0);
 #endif
 
-    if (conf::midiSync == MIDI_SYNC_CLOCK_M)
-        kernelMidi::send(MIDI_POSITION_PTR, 0, 0);
+	if (conf::midiSync == MIDI_SYNC_CLOCK_M)
+		kernelMidi::send(MIDI_POSITION_PTR, 0, 0);
 }
 
 /* -------------------------------------------------------------------------- */

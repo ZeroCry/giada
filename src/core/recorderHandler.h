@@ -60,7 +60,11 @@ whether any action has been cloned. */
 
 bool cloneActions(int chanIndex, int newChanIndex);
 
-void recordLiveAction(int channel, MidiEvent e);
+/* recCompoundAction
+Records a user-generated (i.e. from MIDI or UI) compound action, made of NOTE_ON 
+and NOTE_OFF . */
+
+void recCompoundAction(int channel, MidiEvent e);
 
 void writePatch(int chanIndex, std::vector<patch::action_t>& pactions);
 void readPatch(const std::vector<patch::action_t>& pactions);

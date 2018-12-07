@@ -230,7 +230,7 @@ void MidiChannel::receiveMidi(const MidiEvent& midiEvent)
 #endif
 
 	if (mr::isActive()) {
-		mrh::recordLiveAction(index, midiEventFlat);
+		mrh::recCompoundAction(index, midiEventFlat);
 		hasActions = true;
 	}
 }

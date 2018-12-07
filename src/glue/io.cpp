@@ -55,7 +55,7 @@ extern gdMainWindow* G_MainWin;
 
 
 namespace giada {
-namespace c     {
+namespace c {
 namespace io 
 {
 void keyPress(Channel* ch, bool ctrl, bool shift, int velocity)

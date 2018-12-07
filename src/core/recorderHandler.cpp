@@ -190,7 +190,7 @@ bool cloneActions(int chanIndex, int newChanIndex)
 /* -------------------------------------------------------------------------- */
 
 
-void recordLiveAction(int channel, MidiEvent e)
+void recCompoundAction(int channel, MidiEvent e)
 {
     if (!e.isNoteOnOff()) // Can't record other kind of events right now
         return;

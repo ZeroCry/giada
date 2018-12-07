@@ -41,7 +41,7 @@ class SampleChannel;
 class MidiChannel;
 
 namespace giada {
-namespace c     {
+namespace c {
 namespace io 
 {
 /* keyPress / keyRelease
