@@ -73,6 +73,8 @@ vector<const m::Action*> getMidiActions(const MidiChannel* ch)
 
 void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f2)
 {
+	namespace mr = m::recorder;
+
 	if (f2 == 0)
 		f2 = f1 + G_DEFAULT_ACTION_SIZE;
 
@@ -87,8 +89,10 @@ void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f
 	m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::NOTE_ON,  note, velocity);
 	m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::NOTE_OFF, note, velocity);
 
-	const m::Action* a = m::recorder::rec(ch->index, f1, e1, nullptr, nullptr);
-	                     m::recorder::rec(ch->index, f2, e2, a, nullptr);
+	const m::Action* a1 = mr::rec(ch->index, f1, e1, nullptr, nullptr);
+	const m::Action* a2 = mr::rec(ch->index, f2, e2, nullptr, nullptr);
+
+	mr::updateSiblings(a1, nullptr, a2);
 
 	recorder::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
@@ -140,8 +144,9 @@ void recordSampleAction(const SampleChannel* ch, int type, Frame f1, Frame f2)
 	if (ch->mode == ChannelMode::SINGLE_PRESS) {
 		m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::NOTE_ON, 0, 0);
 		m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::NOTE_OFF, 0, 0);
-		const m::Action* a = mr::rec(ch->index, f1, e1, nullptr);
-		                     mr::rec(ch->index, f2 == 0 ? f1 + G_DEFAULT_ACTION_SIZE : f2, e2, a);
+		const m::Action* a1 = mr::rec(ch->index, f1, e1, nullptr);
+		const m::Action* a2 = mr::rec(ch->index, f2 == 0 ? f1 + G_DEFAULT_ACTION_SIZE : f2, e2, nullptr);
+		mr::updateSiblings(a1, nullptr, a2);
 	}
 	else {
 		m::MidiEvent e1 = m::MidiEvent(type, 0, 0);
