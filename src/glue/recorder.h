@@ -29,55 +29,17 @@
 #define G_GLUE_RECORDER_H
 
 
-#include <vector>
-#include "../core/recorder.h"
-
-
-class SampleChannel;
-class MidiChannel;
 class geChannel;
 
 
 namespace giada {
-namespace m
-{
-class Action;
-}
 namespace c {
 namespace recorder 
 {
 void clearAllActions(geChannel* gch);
 void clearVolumeActions(geChannel* gch);
 void clearStartStopActions(geChannel* gch);
-
-
-
-/* MOVE ALL THESE FUNCTIONS TO c::actionEditor. These functions are designed for 
-the Piano Roll (not for live recording).*/
-
-/* MIDI actions.  */
-
-void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f2=0);
-void deleteMidiAction(MidiChannel* ch, const m::Action* a);
-void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocity, 
-    Frame f1, Frame f2);
-std::vector<const m::Action*> getMidiActions(const MidiChannel* ch);
-void updateVelocity(const MidiChannel* ch, const m::Action* a, int value);
-
-/* Sample Actions. */
-
-void recordSampleAction(const SampleChannel* ch, int type, Frame f1, Frame f2=0);
-std::vector<const m::Action*> getSampleActions(const SampleChannel* ch);
-void deleteSampleAction(SampleChannel* ch, const m::Action* a);
-void updateSampleAction(SampleChannel* ch, const m::Action* a, int type, Frame f1, Frame f2=0);
-
-/* Envelope actions (only volume for now). */
-
-std::vector<const m::Action*> getEnvelopeActions(const Channel* ch);
-void recordEnvelopeAction(Channel* ch, int frame, int value);
-void deleteEnvelopeAction(Channel* ch, const m::Action* a);
-void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value);
-
+void updateChannel(geChannel* gch, bool refreshActionEditor=true);
 }}} // giada::c::recorder::
 
 #endif

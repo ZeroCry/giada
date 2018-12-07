@@ -33,7 +33,7 @@
 #include "../../../core/action.h"
 #include "../../../core/sampleChannel.h"
 #include "../../../utils/log.h"
-#include "../../../glue/recorder.h"
+#include "../../../glue/actionEditor.h"
 #include "../../dialogs/actionEditor/baseActionEditor.h"
 #include "sampleAction.h"
 #include "sampleActionEditor.h"
@@ -67,7 +67,7 @@ geSampleActionEditor::~geSampleActionEditor()
 void geSampleActionEditor::rebuild()
 {
 	namespace mr = m::recorder;
-	namespace cr = c::recorder;
+	namespace ca = c::actionEditor;
 
 	const SampleChannel* ch = static_cast<const SampleChannel*>(m_ch);
 
@@ -77,7 +77,7 @@ void geSampleActionEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	for (const m::Action* a1 : cr::getSampleActions(ch)) {
+	for (const m::Action* a1 : ca::getSampleActions(ch)) {
 
 		if (a1->event.getStatus() == m::MidiEvent::ENVELOPE || isNoteOffSinglePress(a1))
 			continue;
@@ -134,7 +134,7 @@ void geSampleActionEditor::draw()
 void geSampleActionEditor::onAddAction()     
 {
 	Frame f = m_base->pixelToFrame(Fl::event_x() - x());
-	c::recorder::recordSampleAction(static_cast<SampleChannel*>(m_ch), 
+	c::actionEditor::recordSampleAction(static_cast<SampleChannel*>(m_ch), 
 		m_base->getActionType(), f);
 	rebuild();
 }
@@ -145,7 +145,7 @@ void geSampleActionEditor::onAddAction()
 
 void geSampleActionEditor::onDeleteAction()  
 {
-	c::recorder::deleteSampleAction(static_cast<SampleChannel*>(m_ch), m_action->a1);
+	c::actionEditor::deleteSampleAction(static_cast<SampleChannel*>(m_ch), m_action->a1);
 	rebuild();
 }
 
@@ -190,7 +190,7 @@ void geSampleActionEditor::onResizeAction()
 
 void geSampleActionEditor::onRefreshAction() 
 {
-	namespace cr = c::recorder;
+	namespace ca = c::actionEditor;
 
 	SampleChannel* ch = static_cast<SampleChannel*>(m_ch);
 
@@ -213,7 +213,7 @@ void geSampleActionEditor::onRefreshAction()
 		f2 = m_base->pixelToFrame(p2);
 	}
 
-	cr::updateSampleAction(ch, m_action->a1, type, f1, f2);
+	ca::updateSampleAction(ch, m_action->a1, type, f1, f2);
 			
 	rebuild();
 }

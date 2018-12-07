@@ -35,7 +35,7 @@
 #include "../../../core/action.h"
 #include "../../../core/clock.h"
 #include "../../../core/midiChannel.h"
-#include "../../../glue/recorder.h"
+#include "../../../glue/actionEditor.h"
 #include "../../dialogs/actionEditor/baseActionEditor.h"
 #include "envelopePoint.h"
 #include "velocityEditor.h"
@@ -116,7 +116,7 @@ int geVelocityEditor::yToValue(Pixel px) const
 
 void geVelocityEditor::rebuild()
 {
-	namespace cr = c::recorder;
+	namespace ca = c::actionEditor;
 
 	/* Remove all existing actions and set a new width, according to the current
 	zoom level. */
@@ -124,7 +124,7 @@ void geVelocityEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	for (const m::Action* action : cr::getMidiActions(static_cast<MidiChannel*>(m_ch)))
+	for (const m::Action* action : ca::getMidiActions(static_cast<MidiChannel*>(m_ch)))
 	{
 		if (action->event.getStatus() == m::MidiEvent::NOTE_OFF)
 			continue;
@@ -164,7 +164,7 @@ void geVelocityEditor::onMoveAction()
 
 void geVelocityEditor::onRefreshAction() 
 {
-	c::recorder::updateVelocity(static_cast<MidiChannel*>(m_ch), m_action->a1, 
+	c::actionEditor::updateVelocity(static_cast<MidiChannel*>(m_ch), m_action->a1, 
 		yToValue(m_action->y() - y()));
 
 	m_base->rebuild();  // Rebuild pianoRoll as well

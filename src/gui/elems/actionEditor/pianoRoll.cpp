@@ -36,7 +36,7 @@
 #include "../../../utils/log.h"
 #include "../../../utils/string.h"
 #include "../../../utils/math.h"
-#include "../../../glue/recorder.h"
+#include "../../../glue/actionEditor.h"
 #include "../../dialogs/actionEditor/baseActionEditor.h"
 #include "pianoItem.h"
 #include "noteEditor.h"
@@ -221,7 +221,7 @@ void gePianoRoll::onAddAction()
 {
 	Frame frame = m_base->pixelToFrame(Fl::event_x() - x());
 	int   note  = yToNote(Fl::event_y() - y());
-	c::recorder::recordMidiAction(static_cast<MidiChannel*>(m_ch), note, G_MAX_VELOCITY, frame);
+	c::actionEditor::recordMidiAction(static_cast<MidiChannel*>(m_ch), note, G_MAX_VELOCITY, frame);
 	
 	m_base->rebuild();  // Rebuild velocityEditor as well
 }
@@ -232,7 +232,7 @@ void gePianoRoll::onAddAction()
 
 void gePianoRoll::onDeleteAction()
 {
-	c::recorder::deleteMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1);	
+	c::actionEditor::deleteMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1);	
 	
 	m_base->rebuild();  // Rebuild velocityEditor as well
 }
@@ -288,7 +288,7 @@ void gePianoRoll::onResizeAction()
 
 void gePianoRoll::onRefreshAction()
 {
-	namespace cr = c::recorder;
+	namespace ca = c::actionEditor;
 
 	if (static_cast<gePianoItem*>(m_action)->orphaned)
 		return;
@@ -321,7 +321,7 @@ void gePianoRoll::onRefreshAction()
 	int note     = yToNote(m_action->y() - y());
 	int velocity = m_action->a1->event.getVelocity();
 
-	cr::updateMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1, note, 
+	ca::updateMidiAction(static_cast<MidiChannel*>(m_ch), m_action->a1, note, 
 		velocity, f1, f2);
 
 	m_base->rebuild();  // Rebuild velocityEditor as well
@@ -354,7 +354,7 @@ Pixel gePianoRoll::snapToY(Pixel p) const
 
 void gePianoRoll::rebuild()
 {
-	namespace cr = c::recorder;
+	namespace ca = c::actionEditor;
 
 	/* Remove all existing actions and set a new width, according to the current
 	zoom level. */
@@ -362,7 +362,7 @@ void gePianoRoll::rebuild()
 	clear();
 	size(m_base->fullWidth, (MAX_KEYS + 1) * CELL_H);
 
-	for (const m::Action* action : cr::getMidiActions(static_cast<MidiChannel*>(m_ch)))
+	for (const m::Action* action : ca::getMidiActions(static_cast<MidiChannel*>(m_ch)))
 	{
 		if (action->event.getStatus() == m::MidiEvent::NOTE_OFF)
 			continue;

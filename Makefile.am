@@ -90,7 +90,9 @@ sourcesCore =                            \
 	src/glue/recorder.cpp                  \
 	src/glue/sampleEditor.h                \
 	src/glue/sampleEditor.cpp              \
-	src/gui/dialogs/window.h			         \
+	src/glue/actionEditor.h                \
+	src/glue/actionEditor.cpp              \
+	src/gui/dialogs/window.h               \
 	src/gui/dialogs/window.cpp             \
 	src/gui/dialogs/gd_keyGrabber.h        \
 	src/gui/dialogs/gd_keyGrabber.cpp      \

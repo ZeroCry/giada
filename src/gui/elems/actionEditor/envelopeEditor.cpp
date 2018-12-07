@@ -34,7 +34,7 @@
 #include "../../../core/action.h"
 #include "../../../core/recorder/recorder.h"
 #include "../../../core/sampleChannel.h"
-#include "../../../glue/recorder.h"
+#include "../../../glue/actionEditor.h"
 #include "../../dialogs/actionEditor/baseActionEditor.h"
 #include "envelopePoint.h"
 #include "envelopeEditor.h"
@@ -115,7 +115,7 @@ void geEnvelopeEditor::draw()
 void geEnvelopeEditor::rebuild()
 {
 	namespace mr = m::recorder;
-	namespace cr = c::recorder;
+	namespace ca = c::actionEditor;
 
 	/* Remove all existing actions and set a new width, according to the current
 	zoom level. */
@@ -123,7 +123,7 @@ void geEnvelopeEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	for (const m::Action* a : cr::getEnvelopeActions(m_ch)) {
+	for (const m::Action* a : ca::getEnvelopeActions(m_ch)) {
 		if (a->event.getStatus() != m::MidiEvent::ENVELOPE)
 			continue;
 		add(new geEnvelopePoint(frameToX(a->frame), valueToY(a->event.getVelocity()), a)); 		
@@ -179,7 +179,7 @@ void geEnvelopeEditor::onAddAction()
 	Frame f = m_base->pixelToFrame(Fl::event_x() - x());
 	int   v = yToValue(Fl::event_y() - y());
 	
-	c::recorder::recordEnvelopeAction(m_ch, f, v);
+	c::actionEditor::recordEnvelopeAction(m_ch, f, v);
 	rebuild();
 }
 
@@ -189,7 +189,7 @@ void geEnvelopeEditor::onAddAction()
 
 void geEnvelopeEditor::onDeleteAction()  
 {
-	c::recorder::deleteEnvelopeAction(m_ch, m_action->a1);
+	c::actionEditor::deleteEnvelopeAction(m_ch, m_action->a1);
 	rebuild();
 }
 
@@ -227,7 +227,7 @@ void geEnvelopeEditor::onRefreshAction()
 {
 	Frame f = m_base->pixelToFrame((m_action->x() - x()) + geEnvelopePoint::SIDE / 2);
 	float v = yToValue(m_action->y() - y(), geEnvelopePoint::SIDE);
-	c::recorder::updateEnvelopeAction(m_ch, m_action->a1, f, v);
+	c::actionEditor::updateEnvelopeAction(m_ch, m_action->a1, f, v);
 
 	rebuild();
 }

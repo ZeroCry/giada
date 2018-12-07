@@ -24,25 +24,6 @@ void onFirstBeat_(MidiChannel* ch)
 		ch->sendMidiLstatus();
 	}
 }
-
-
-/* -------------------------------------------------------------------------- */
-
-
-void parseAction_(MidiChannel* ch, const Action* a, int localFrame)
-{
-	if (ch->isPlaying() && !ch->mute) {
-		if (ch->midiOut) {
-			MidiEvent event = a->event;
-			event.setChannel(ch->midiOutChan);
-			kernelMidi::send(event.getRaw());
-		}
-#ifdef WITH_VST
-		ch->addVstMidiEvent(a->event.getRaw(), localFrame);
-#endif
-	}
-}
-
 }; // {anonymous}
 
 
@@ -57,7 +38,7 @@ void parseEvents(MidiChannel* ch, mixer::FrameEvents fe)
 		onFirstBeat_(ch);
 	for (const Action* action : fe.actions)
 		if (action->channel == ch->index /*&& action->type == G_ACTION_MIDI*/)
-			parseAction_(ch, action, fe.frameLocal);
+			ch->sendMidi(action, fe.frameLocal);
 }
 
 
@@ -67,9 +48,9 @@ void parseEvents(MidiChannel* ch, mixer::FrameEvents fe)
 void process(MidiChannel* ch, giada::m::AudioBuffer& out, 
 	const giada::m::AudioBuffer& in, bool audible)
 {
-	#ifdef WITH_VST
-		pluginHost::processStack(ch->buffer, pluginHost::CHANNEL, ch);
-	#endif
+#ifdef WITH_VST
+	pluginHost::processStack(ch->buffer, pluginHost::CHANNEL, ch);
+#endif
 
 	/* Process the plugin stack first, then quit if the channel is muted/soloed. 
 	This way there's no risk of cutting midi event pairs such as note-on and 
