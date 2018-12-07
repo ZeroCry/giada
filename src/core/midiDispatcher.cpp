@@ -173,11 +173,11 @@ void processMaster(const MidiEvent& midiEvent)
 
 	if      (pure == conf::midiInRewind) {
 		gu_log("  >>> rewind (master) (pure=0x%X)\n", pure);
-		glue_rewindSeq(false);
+		c::transport::rewindSeq(false);
 	}
 	else if (pure == conf::midiInStartStop) {
 		gu_log("  >>> startStop (master) (pure=0x%X)\n", pure);
-		glue_startStopSeq(false);
+		c::transport::startStopSeq(false);
 	}
 	else if (pure == conf::midiInActionRec) {
 		gu_log("  >>> actionRec (master) (pure=0x%X)\n", pure);
@@ -189,7 +189,7 @@ void processMaster(const MidiEvent& midiEvent)
 	}
 	else if (pure == conf::midiInMetronome) {
 		gu_log("  >>> metronome (master) (pure=0x%X)\n", pure);
-		glue_startStopMetronome(false);
+		c::transport::startStopMetronome(false);
 	}
 	else if (pure == conf::midiInVolumeIn) {
 		float vf = midiEvent.getVelocity() / 127.0f;

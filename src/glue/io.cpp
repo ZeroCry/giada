@@ -101,15 +101,13 @@ void startStopActionRec(bool gui)
 
 void startActionRec(bool gui)
 {
-	using namespace giada::m;
-
-	if (kernelAudio::getStatus() == false)
+	if (m::kernelAudio::getStatus() == false)
 		return;
 
 	m::recorder::enable();
 
-	if (!clock::isRunning())
-		glue_startSeq(false);  // update gui
+	if (!m::clock::isRunning())
+		c::transport::startSeq(false);  // update gui
 
 	if (!gui) {
 		Fl::lock();
@@ -175,7 +173,7 @@ int startInputRec(bool gui)
 	}
 
 	if (!clock::isRunning())
-		glue_startSeq(false); // update gui anyway
+		transport::startSeq(false); // update gui anyway
 
 	Fl::lock();
 		if (!gui)

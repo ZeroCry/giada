@@ -56,6 +56,7 @@
 #include "../core/channel.h"
 #include "../core/sampleChannel.h"
 #include "../core/midiChannel.h"
+#include "../core/recorder/recorder.h"
 #include "../core/plugin.h"
 #include "../core/waveManager.h"
 #include "main.h"
@@ -131,7 +132,7 @@ void deleteChannel(Channel* ch)
 
 	if (!gdConfirmWin("Warning", "Delete channel: are you sure?"))
 		return;
-	recorder_DEPR_::clearChan(ch->index);
+	recorder::clearChannel(ch->index);
 	ch->hasActions = false;
 #ifdef WITH_VST
 	pluginHost::freeStack(pluginHost::CHANNEL, &mixer::mutex, ch);
@@ -158,7 +159,7 @@ void freeChannel(Channel* ch)
 		return;
 
 	G_MainWin->keyboard->freeChannel(ch->guiChannel);
-	m::recorder_DEPR_::clearChan(ch->index);
+	m::recorder::clearChannel(ch->index);
 	ch->empty();
 
 	/* delete any related subwindow */

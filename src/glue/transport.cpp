@@ -36,22 +36,26 @@
 #include "transport.h"
 
 
-extern gdMainWindow *G_MainWin;
-
+extern gdMainWindow* G_MainWin;
+ 
 
 using namespace giada::m;
 
 
-void glue_startStopSeq(bool gui)
+namespace giada {
+namespace c {
+namespace transport 
 {
-	clock::isRunning() ? glue_stopSeq(gui) : glue_startSeq(gui);
+void startStopSeq(bool gui)
+{
+	clock::isRunning() ? stopSeq(gui) : startSeq(gui);
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 
-void glue_startSeq(bool gui)
+void startSeq(bool gui)
 {
 	clock::start();
 
@@ -70,7 +74,7 @@ void glue_startSeq(bool gui)
 /* -------------------------------------------------------------------------- */
 
 
-void glue_stopSeq(bool gui)
+void stopSeq(bool gui)
 {
 	mh::stopSequencer();
 
@@ -109,7 +113,7 @@ void glue_stopSeq(bool gui)
 /* -------------------------------------------------------------------------- */
 
 
-void glue_startStopMetronome(bool gui)
+void startStopMetronome(bool gui)
 {
 	mixer::metronome = !mixer::metronome;
 	if (!gui) {
@@ -118,3 +122,5 @@ void glue_startStopMetronome(bool gui)
 		Fl::unlock();
 	}
 }
+
+}}} // giada::c::transport::

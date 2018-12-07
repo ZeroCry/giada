@@ -232,7 +232,7 @@ int geKeyboard::handle(int e)
 			if (e == FL_KEYDOWN) {
 				if (Fl::event_key() == FL_BackSpace && !bckspcPressed) {
 					bckspcPressed = true;
-					glue_rewindSeq(false);          // not from GUI
+					transport::rewindSeq(false);          // not from GUI
 					ret = 1;
 					break;
 				}
@@ -250,7 +250,7 @@ int geKeyboard::handle(int e)
 				}
 				else if (Fl::event_key() == ' ' && !spacePressed) {
 					spacePressed = true;
-          glue_startStopSeq(false);      // unot from GUI
+					transport::startStopSeq(false);      // unot from GUI
 					ret = 1;
 					break;
 				}

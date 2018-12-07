@@ -68,7 +68,7 @@ void clearVolumeActions(geChannel* gch)
 {
 	if (!gdConfirmWin("Warning", "Clear all volume actions: are you sure?"))
 		return;
-	m::recorder_DEPR_::clearAction(gch->ch->index, G_ACTION_VOLUME);
+	m::recorder::clearActions(gch->ch->index, m::MidiEvent::ENVELOPE);
 	updateChannel(gch);
 }
 
@@ -80,7 +80,9 @@ void clearStartStopActions(geChannel* gch)
 {
 	if (!gdConfirmWin("Warning", "Clear all start/stop actions: are you sure?"))
 		return;
-	m::recorder_DEPR_::clearAction(gch->ch->index, G_ACTION_KEYPRESS | G_ACTION_KEYREL | G_ACTION_KILL);
+	m::recorder::clearActions(gch->ch->index, m::MidiEvent::NOTE_ON);
+	m::recorder::clearActions(gch->ch->index, m::MidiEvent::NOTE_OFF);
+	m::recorder::clearActions(gch->ch->index, m::MidiEvent::NOTE_KILL);
 	updateChannel(gch);
 }
 
