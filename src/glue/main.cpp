@@ -155,27 +155,6 @@ void glue_setBeats(int beats, int bars)
 /* -------------------------------------------------------------------------- */
 
 
-void glue_rewindSeq(bool gui, bool notifyJack)
-{
-	mh::rewindSequencer();
-
-	/* FIXME - potential desync when Quantizer is enabled from this point on.
-	Mixer would wait, while the following calls would be made regardless of its
-	state. */
-
-#ifdef __linux__
-	if (notifyJack)
-		kernelAudio::jackSetPosition(0);
-#endif
-
-	if (conf::midiSync == MIDI_SYNC_CLOCK_M)
-		kernelMidi::send(MIDI_POSITION_PTR, 0, 0);
-}
-
-
-/* -------------------------------------------------------------------------- */
-
-
 void glue_quantize(int val)
 {
 	clock::setQuantize(val);

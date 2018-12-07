@@ -29,7 +29,10 @@
 #include "../gui/elems/mainWindow/mainTransport.h"
 #include "../gui/dialogs/gd_mainWindow.h"
 #include "../core/clock.h"
+#include "../core/conf.h"
+#include "../core/const.h"
 #include "../core/kernelAudio.h"
+#include "../core/kernelMidi.h"
 #include "../core/mixerHandler.h"
 #include "../core/mixer.h"
 #include "../core/recorder.h"
@@ -109,6 +112,26 @@ void stopSeq(bool gui)
   }
 }
 
+
+/* -------------------------------------------------------------------------- */
+
+
+void rewindSeq(bool gui, bool notifyJack)
+{
+    mh::rewindSequencer();
+
+    /* FIXME - potential desync when Quantizer is enabled from this point on.
+    Mixer would wait, while the following calls would be made regardless of its
+    state. */
+
+#ifdef __linux__
+    if (notifyJack)
+        kernelAudio::jackSetPosition(0);
+#endif
+
+    if (conf::midiSync == MIDI_SYNC_CLOCK_M)
+        kernelMidi::send(MIDI_POSITION_PTR, 0, 0);
+}
 
 /* -------------------------------------------------------------------------- */
 
