@@ -280,7 +280,7 @@ it drives knobs, volume, faders and such. */
 #define MIDI_CHAN_14        0x0E << 24
 #define MIDI_CHAN_15        0x0F << 24
 
-const int MIDI_CHANS[G_MAX_MIDI_CHANS] = {
+constexpr int G_MIDI_CHANS[G_MAX_MIDI_CHANS] = {
 	MIDI_CHAN_0,  MIDI_CHAN_1,	MIDI_CHAN_2,  MIDI_CHAN_3,
 	MIDI_CHAN_4,  MIDI_CHAN_5,	MIDI_CHAN_6,  MIDI_CHAN_7,
 	MIDI_CHAN_8,  MIDI_CHAN_9,	MIDI_CHAN_10, MIDI_CHAN_11,

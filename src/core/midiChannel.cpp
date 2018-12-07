@@ -45,9 +45,9 @@ using namespace giada::m;
 
 
 MidiChannel::MidiChannel(int bufferSize)
-	: Channel    (ChannelType::MIDI, ChannelStatus::OFF, bufferSize),
+	: Channel      (ChannelType::MIDI, ChannelStatus::OFF, bufferSize),
 		midiOut    (false),
-		midiOutChan(MIDI_CHANS[0])
+		midiOutChan(G_MIDI_CHANS[0])
 {
 }
 
@@ -75,8 +75,8 @@ void MidiChannel::parseEvents(mixer::FrameEvents fe)
 /* -------------------------------------------------------------------------- */
 
 
-void MidiChannel::process(giada::m::AudioBuffer& out, 
-	const giada::m::AudioBuffer& in, bool audible, bool running)
+void MidiChannel::process(AudioBuffer& out, const AudioBuffer& in, bool audible, 
+	bool running)
 {
 	midiChannelProc::process(this, out, in, audible);
 }
@@ -189,7 +189,7 @@ void MidiChannel::sendMidi(recorder_DEPR_::action* a, int localFrame)
 {
 	if (isPlaying() && !mute) {
 		if (midiOut)
-			kernelMidi::send(a->iValue | MIDI_CHANS[midiOutChan]);
+			kernelMidi::send(a->iValue | G_MIDI_CHANS[midiOutChan]);
 
 #ifdef WITH_VST
 		addVstMidiEvent(a->iValue, localFrame);
@@ -202,7 +202,7 @@ void MidiChannel::sendMidi(uint32_t data)
 {
 	if (isPlaying() && !mute) {
 		if (midiOut)
-			kernelMidi::send(data | MIDI_CHANS[midiOutChan]);
+			kernelMidi::send(data | G_MIDI_CHANS[midiOutChan]);
 #ifdef WITH_VST
 		addVstMidiEvent(data, 0);
 #endif

@@ -36,6 +36,10 @@ class SampleChannel;
 
 
 namespace giada {
+namespace m
+{
+class Action;
+}
 namespace v
 {
 class geSampleAction;
@@ -50,6 +54,8 @@ private:
 	void onMoveAction()    override;
 	void onResizeAction()  override;
 	void onRefreshAction() override;
+
+    bool isNoteOffSinglePress(const m::Action* a);
 
 public:
 

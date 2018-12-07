@@ -77,27 +77,23 @@ void geSampleActionEditor::rebuild()
 	clear();
 	size(m_base->fullWidth, h());
 
-	for (const m::Action* action : cr::getSampleActions(ch)) {
+	for (const m::Action* a1 : cr::getSampleActions(ch)) {
 
-		if (action->event.getStatus() == m::MidiEvent::ENVELOPE)
+		if (a1->event.getStatus() == m::MidiEvent::ENVELOPE || isNoteOffSinglePress(a1))
 			continue;
 
-		const m::Action* a1 = action;
-		const m::Action* a2 = action->next;
-
-		gu_log("[geSampleActionEditor::rebuild] Action [%d, %d)\n", 
-			a1->frame, a2 == nullptr ? -1 : a2->frame);
+		const m::Action* a2 = a1->next;
 
 		Pixel px = x() + m_base->frameToPixel(a1->frame);
 		Pixel py = y() + 4;
 		Pixel pw = 0;
 		Pixel ph = h() - 8;
-		if (a2 != nullptr)
+		if (a2 != nullptr && ch->mode == ChannelMode::SINGLE_PRESS)
 			pw = m_base->frameToPixel(a2->frame - a1->frame);
 
-		geSampleAction* a = new geSampleAction(px, py, pw, ph, ch, a1, a2);
-		add(a);
-		resizable(a);
+		geSampleAction* gsa = new geSampleAction(px, py, pw, ph, ch, a1, a2);
+		add(gsa);
+		resizable(gsa);
 	}
 
 	/* If channel is LOOP_ANY, deactivate it: a loop mode channel cannot hold 
@@ -221,4 +217,15 @@ void geSampleActionEditor::onRefreshAction()
 			
 	rebuild();
 }
+
+
+/* -------------------------------------------------------------------------- */
+
+
+bool geSampleActionEditor::isNoteOffSinglePress(const m::Action* a)
+{
+	const SampleChannel* ch = static_cast<const SampleChannel*>(m_ch);
+	return ch->mode == ChannelMode::SINGLE_PRESS && a->event.getStatus() == m::MidiEvent::NOTE_OFF;
+}
+
 }} // giada::v::

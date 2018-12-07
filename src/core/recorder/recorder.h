@@ -119,7 +119,8 @@ const Action* rec(int channel, Frame frame, MidiEvent e, const Action* prev,
     const Action* next=nullptr);
 
 /* forEachAction
-Applies a read-only callback on each action recorded. */
+Applies a read-only callback on each action recorded. NEVER do anything inside 
+the callback that might alter the ActionMap. */
 
 void forEachAction(std::function<void(const Action*)> f);
 
@@ -140,7 +141,6 @@ const Action* getClosestAction(int channel, Frame f, int type);
 
 
 int getLatestActionId();
-
 
 /* getActionMap
 Returns a copy of the internal action map. Used only by recorderHandler. */
