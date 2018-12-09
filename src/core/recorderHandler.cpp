@@ -82,7 +82,7 @@ bool isNullLoop_(Frame noteOffFrame)
 void recordLiveNoteOn_(int channel, MidiEvent e)
 {
     assert(noteOn_ == nullptr);
-    noteOn_ = recorder::rec(channel, clock::getCurrentFrame(), e, nullptr, nullptr);
+    noteOn_ = recorder::rec(channel, clock::getCurrentFrame(), e);
 }
 
 
@@ -101,7 +101,7 @@ void recordLiveNoteOff_(int channel, MidiEvent e)
     if (isNullLoop_(frame))
         recorder::deleteAction(noteOn_);
     else {
-        const Action* noteOff = recorder::rec(channel, frame, e, nullptr, nullptr);
+        const Action* noteOff = recorder::rec(channel, frame, e);
         recorder::updateSiblings(noteOff, noteOn_, nullptr);        
     }
 

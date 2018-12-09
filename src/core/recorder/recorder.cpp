@@ -277,8 +277,7 @@ void disable()  { active = false; }
 /* -------------------------------------------------------------------------- */
 
 
-const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev,
-	const Action* next)
+const Action* rec(int channel, Frame frame, MidiEvent event)
 {
 	ActionMap temp = actions;
 
@@ -286,19 +285,13 @@ const Action* rec(int channel, Frame frame, MidiEvent event, const Action* prev,
 	enough to insert a new item first. Then swap the temp map with the original 
 	one. No plug-in data for now. */
 	
-	temp[frame].push_back(new Action{ actionId++, channel, frame, event, -1, -1, prev, next });
-
-	/* Update linked actions, if any. */
+	temp[frame].push_back(new Action{ actionId++, channel, frame, event, -1, -1, nullptr, nullptr });
 	
-	const Action* curr = temp[frame].back();
-	if (prev != nullptr)
-		const_cast<Action*>(prev)->next = curr;
-	if (next != nullptr)
-		const_cast<Action*>(next)->prev = curr;
+	//const Action* curr = temp[frame].back();
 	
 	lock_([&](){ actions = std::move(temp); });
 
-	return curr;
+	return actions[frame].back();
 }
 
 

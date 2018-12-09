@@ -115,8 +115,7 @@ void disable();
 /* rec
 Records an action and returns it. */
 
-const Action* rec(int channel, Frame frame, MidiEvent e, const Action* prev, 
-    const Action* next=nullptr);
+const Action* rec(int channel, Frame frame, MidiEvent e);
 
 /* forEachAction
 Applies a read-only callback on each action recorded. NEVER do anything inside 

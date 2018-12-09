@@ -154,7 +154,7 @@ void recordKeyPressAction_(SampleChannel* ch)
 		ch->readActions = false;
 	}
 	else
-		recorder::rec(ch->index, clock::getCurrentFrame(), MidiEvent(MidiEvent::NOTE_ON, 0, 0), nullptr);
+		recorder::rec(ch->index, clock::getCurrentFrame(), MidiEvent(MidiEvent::NOTE_ON, 0, 0));
 	ch->hasActions = true;
 }
 
@@ -225,7 +225,7 @@ bool recordKill(SampleChannel* ch)
 {
 	/* Don't record NOTE_KILL actions for LOOP channels. */
 	if (recorderCanRec_(ch) && !ch->isAnyLoopMode()) {
-		recorder::rec(ch->index, clock::getCurrentFrame(), MidiEvent(MidiEvent::NOTE_KILL, 0, 0), nullptr);
+		recorder::rec(ch->index, clock::getCurrentFrame(), MidiEvent(MidiEvent::NOTE_KILL, 0, 0));
 		ch->hasActions = true;
 	}
 	return true;

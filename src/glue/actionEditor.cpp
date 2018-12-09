@@ -54,6 +54,50 @@ Frame fixVerticalEnvActions_(Frame f, const m::Action* a1, const m::Action* a2)
 		return -1;
 	return f;
 }
+
+
+/* -------------------------------------------------------------------------- */
+
+/* recordFirstEnvelopeAction_
+First action ever? Add actions at boundaries. */
+
+void recordFirstEnvelopeAction_(int channel, Frame frame, int value)
+{
+	namespace mr = m::recorder;
+
+	m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, G_MAX_VELOCITY);
+	m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, value);
+	const m::Action* a1 = mr::rec(channel, 0, e1);	
+	const m::Action* a2 = mr::rec(channel, frame, e2);
+	const m::Action* a3 = mr::rec(channel, m::clock::getFramesInLoop() - 1, e1);
+	mr::updateSiblings(a1, a3, a2); // Circular loop (begin)
+	mr::updateSiblings(a2, a1, a3);
+	mr::updateSiblings(a3, a2, a1); // Circular loop (end)
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+/* recordNonFirstEnvelopeAction_
+Find action right before frame 'frame' and inject a new action in there. 
+Vertical envelope points are forbidden. */
+
+void recordNonFirstEnvelopeAction_(int channel, Frame frame, int value)
+{
+	namespace mr = m::recorder;
+
+	m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, value);
+	const m::Action* a1 = mr::getClosestAction(channel, frame, m::MidiEvent::ENVELOPE);
+	const m::Action* a3 = a1->next;
+	assert(a1 != nullptr);
+	assert(a3 != nullptr);
+	frame = fixVerticalEnvActions_(frame, a1, a3);
+	if (frame == -1) // Vertical points, nothing to do here
+		return;
+	const m::Action* a2 = mr::rec(channel, frame, e2);
+	mr::updateSiblings(a2, a1, a3);
+}
 }; // {anonymous}
 
 
@@ -74,6 +118,7 @@ vector<const m::Action*> getMidiActions(const MidiChannel* ch)
 void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f2)
 {
 	namespace mr = m::recorder;
+	namespace cr = c::recorder;
 
 	if (f2 == 0)
 		f2 = f1 + G_DEFAULT_ACTION_SIZE;
@@ -89,12 +134,12 @@ void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f
 	m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::NOTE_ON,  note, velocity);
 	m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::NOTE_OFF, note, velocity);
 
-	const m::Action* a1 = mr::rec(ch->index, f1, e1, nullptr, nullptr);
-	const m::Action* a2 = mr::rec(ch->index, f2, e2, nullptr, nullptr);
+	const m::Action* a1 = mr::rec(ch->index, f1, e1);
+	const m::Action* a2 = mr::rec(ch->index, f2, e2);
 
 	mr::updateSiblings(a1, nullptr, a2);
 
-	recorder::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	cr::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 
@@ -104,6 +149,7 @@ void recordMidiAction(MidiChannel* ch, int note, int velocity, Frame f1, Frame f
 void deleteMidiAction(MidiChannel* ch, const m::Action* a)
 {
 	namespace mr = m::recorder;
+	namespace cr = c::recorder;
 
 	assert(a != nullptr);
 	assert(a->event.getStatus() == m::MidiEvent::NOTE_ON);
@@ -116,7 +162,7 @@ void deleteMidiAction(MidiChannel* ch, const m::Action* a)
 	mr::deleteAction(a->next);
 	mr::deleteAction(a);
 
-	recorder::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	cr::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -140,20 +186,21 @@ void updateMidiAction(MidiChannel* ch, const m::Action* a, int note, int velocit
 void recordSampleAction(const SampleChannel* ch, int type, Frame f1, Frame f2)
 {
 	namespace mr = m::recorder;
-	
+	namespace cr = c::recorder;
+
 	if (ch->mode == ChannelMode::SINGLE_PRESS) {
 		m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::NOTE_ON, 0, 0);
 		m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::NOTE_OFF, 0, 0);
-		const m::Action* a1 = mr::rec(ch->index, f1, e1, nullptr);
-		const m::Action* a2 = mr::rec(ch->index, f2 == 0 ? f1 + G_DEFAULT_ACTION_SIZE : f2, e2, nullptr);
+		const m::Action* a1 = mr::rec(ch->index, f1, e1);
+		const m::Action* a2 = mr::rec(ch->index, f2 == 0 ? f1 + G_DEFAULT_ACTION_SIZE : f2, e2);
 		mr::updateSiblings(a1, nullptr, a2);
 	}
 	else {
 		m::MidiEvent e1 = m::MidiEvent(type, 0, 0);
-		mr::rec(ch->index, f1, e1, nullptr);
+		mr::rec(ch->index, f1, e1);
 	}
 	
-	recorder::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	cr::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 
@@ -178,36 +225,21 @@ void updateSampleAction(SampleChannel* ch, const m::Action* a, int type, Frame f
 
 void recordEnvelopeAction(Channel* ch, int frame, int value)
 {
-	namespace mr = m::recorder;
+	namespace mr = m::recorder;	
+	namespace cr = c::recorder;	
 
 	assert(value >= 0 && value <= G_MAX_VELOCITY);
 
-	m::MidiEvent e2 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, value);
-	
 	/* First action ever? Add actions at boundaries. Else, find action right
 	before frame 'f' and inject a new action in there. Vertical envelope points 
 	are forbidden for now. */
 
-	if (!mr::hasActions(ch->index, m::MidiEvent::ENVELOPE)) {
-		m::MidiEvent e1 = m::MidiEvent(m::MidiEvent::ENVELOPE, 0, G_MAX_VELOCITY);
-		const m::Action* a1 = mr::rec(ch->index, 0, e1, nullptr, nullptr);	
-		const m::Action* a2 = mr::rec(ch->index, frame, e2, nullptr, nullptr);
-		const m::Action* a3 = mr::rec(ch->index, m::clock::getFramesInLoop() - 1, e1, nullptr, nullptr);
-		mr::updateSiblings(a1, a3, a2); // Circular loop (begin)
-		mr::updateSiblings(a2, a1, a3);
-		mr::updateSiblings(a3, a2, a1); // Circular loop (end)
-	}
-	else {
-		const m::Action* a1 = mr::getClosestAction(ch->index, frame, m::MidiEvent::ENVELOPE);
-		const m::Action* a3 = a1->next;
-		assert(a1 != nullptr);
-		assert(a3 != nullptr);
-		frame = fixVerticalEnvActions_(frame, a1, a3);
-		if (frame != -1)
-			mr::rec(ch->index, frame, e2, a1, a3);
-	}
+	if (!mr::hasActions(ch->index, m::MidiEvent::ENVELOPE))
+		recordFirstEnvelopeAction_(ch->index, frame, value);
+	else 
+		recordNonFirstEnvelopeAction_(ch->index, frame, value);
 
-	recorder::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	cr::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 
@@ -217,6 +249,7 @@ void recordEnvelopeAction(Channel* ch, int frame, int value)
 void deleteEnvelopeAction(Channel* ch, const m::Action* a)
 {
 	namespace mr  = m::recorder;
+	namespace cr  = c::recorder;
 	namespace mrh = m::recorderHandler;
 
 	assert(a != nullptr);
@@ -243,7 +276,7 @@ void deleteEnvelopeAction(Channel* ch, const m::Action* a)
 	mr::updateSiblings(a1, a1->prev, a3);
 	mr::updateSiblings(a3, a1, a3->next);
 
-	recorder::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	cr::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 
@@ -253,6 +286,7 @@ void deleteEnvelopeAction(Channel* ch, const m::Action* a)
 void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value)
 {
 	namespace mr  = m::recorder;
+	namespace cr  = c::recorder;
 	namespace mrh = m::recorderHandler;
 
 	assert(a != nullptr);
@@ -267,7 +301,7 @@ void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value)
 		recordEnvelopeAction(ch, frame, value); 
 	}
 
-	recorder::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);	
+	cr::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);	
 }
 
 
@@ -277,6 +311,7 @@ void updateEnvelopeAction(Channel* ch, const m::Action* a, int frame, int value)
 void deleteSampleAction(SampleChannel* ch, const m::Action* a)
 {
 	namespace mr = m::recorder;
+	namespace cr = c::recorder;
 
 	assert(a != nullptr);
 
@@ -284,7 +319,7 @@ void deleteSampleAction(SampleChannel* ch, const m::Action* a)
 		mr::deleteAction(a->next);
 	mr::deleteAction(a);
 
-	recorder::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
+	cr::updateChannel(ch->guiChannel, /*refreshActionEditor=*/false);
 }
 
 
