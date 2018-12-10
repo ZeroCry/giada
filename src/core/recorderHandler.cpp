@@ -25,11 +25,15 @@
  * -------------------------------------------------------------------------- */
 
 
+#include <algorithm>
 #include <cmath>
 #include <cassert>
+#include "../utils/log.h"
 #include "recorder/recorder.h"
+#include "recorder/recorderStack.h"
 #include "action.h"
 #include "clock.h"
+#include "const.h"
 #include "recorderHandler.h"
 
 
@@ -39,7 +43,7 @@ namespace recorderHandler
 {
 namespace
 {
-const Action* noteOn_ = nullptr;
+recorder::Stack stack_;
 
 
 /* -------------------------------------------------------------------------- */
@@ -57,23 +61,15 @@ const Action* getActionById_(int id, const recorder::ActionMap& source)
 
 /* -------------------------------------------------------------------------- */
 
-/* isRingLoop_
+
+/* isRingLoop_, isNullLoop_
 Ring loop: a composite action with key_press at frame N and key_release at 
-frame M, with M <= N. */
-
-bool isRingLoop_(Frame noteOffFrame)
-{
-    return noteOn_ != nullptr && noteOn_->frame > noteOffFrame;
-}
-
-/* isNullLoop_
+frame M, with M <= N. 
 Null loop: a composite action that begins and ends on the very same frame, i.e. 
 with 0 size. Very unlikely. */
 
-bool isNullLoop_(Frame noteOffFrame)
-{
-    return noteOn_ != nullptr && noteOn_->frame == noteOffFrame;
-}
+bool isRingLoop_(Frame noteOn, Frame noteOff) { return noteOn > noteOff; }
+bool isNullLoop_(Frame noteOn, Frame noteOff) { return noteOn == noteOff; }
 
 
 /* -------------------------------------------------------------------------- */
@@ -81,31 +77,38 @@ bool isNullLoop_(Frame noteOffFrame)
 
 void recordLiveNoteOn_(int channel, MidiEvent e)
 {
-    assert(noteOn_ == nullptr);
-    noteOn_ = recorder::rec(channel, clock::getCurrentFrame(), e);
+    if (!stack_.push(recorder::rec(channel, clock::getCurrentFrame(), e)))
+        gu_log("[recorderHandler::recordLiveNoteOn_] Stack saturated!\n");
 }
 
 
 void recordLiveNoteOff_(int channel, MidiEvent e)
 {
-    assert(noteOn_ != nullptr);
-
     Frame frame = clock::getCurrentFrame(); 
+
+    /* Find the matching noteOn. If not found the stack could be full. If it 
+    isn't, something went wrong instead. */
+
+    const Action* noteOn = stack_.pop(e);
+    if (noteOn == nullptr) {
+        if (stack_.isFull()) return;
+        else assert(false); 
+    }
 
     /* If ring loop: record the note off at the end of the sequencer. If 
     null loop: remove previous action and do nothing. */
 
-    if (isRingLoop_(frame))
+    if (isRingLoop_(noteOn->frame, frame))
         frame = clock::getFramesInLoop();
     
-    if (isNullLoop_(frame))
-        recorder::deleteAction(noteOn_);
+    if (isNullLoop_(noteOn->frame, frame))
+        recorder::deleteAction(noteOn);
     else {
         const Action* noteOff = recorder::rec(channel, frame, e);
-        recorder::updateSiblings(noteOff, noteOn_, nullptr);        
+        recorder::updateSiblings(noteOff, noteOn, nullptr);   
     }
 
-    noteOn_ = nullptr;
+    stack_.clear(noteOn); 
 }
 } // {anonymous}
 

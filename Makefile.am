@@ -52,12 +52,12 @@ sourcesCore =                            \
 	src/core/graphics.cpp                  \
 	src/core/patch.h                       \
 	src/core/patch.cpp                     \
-	src/core/recorder.h                    \
-	src/core/recorder.cpp                  \
 	src/core/recorderHandler.h             \
 	src/core/recorderHandler.cpp           \
 	src/core/recorder/recorder.h           \
 	src/core/recorder/recorder.cpp         \
+	src/core/recorder/recorderStack.h      \
+	src/core/recorder/recorderStack.cpp    \
 	src/core/mixer.h                       \
 	src/core/mixer.cpp                     \
 	src/core/storager.h	                   \

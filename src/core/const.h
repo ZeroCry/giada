@@ -92,26 +92,27 @@
 
 
 /* -- MIN/MAX values -------------------------------------------------------- */
-#define G_MIN_BPM           20.0f
-#define G_MIN_BPM_STR       "20.0"
-#define G_MAX_BPM           999.0f
-#define G_MAX_BPM_STR       "999.0"
-#define G_MAX_BEATS				  32
-#define G_MAX_BARS				  32
-#define G_MAX_QUANTIZE      8
-#define G_MIN_DB_SCALE      60.0f
-#define G_MIN_COLUMN_WIDTH  140
-#define G_MAX_BOOST_DB      20.0f
-#define G_MIN_PITCH         0.1f
-#define G_MAX_PITCH         4.0f
-#define G_MAX_GRID_VAL      64
-#define G_MIN_BUF_SIZE      8
-#define G_MAX_BUF_SIZE      4096
-#define G_MIN_GUI_WIDTH     816
-#define G_MIN_GUI_HEIGHT    510
-#define G_MAX_IO_CHANS      2
-#define G_MAX_VELOCITY      0x7F
-#define G_MAX_MIDI_CHANS    16
+constexpr float G_MIN_BPM          = 20.0f;
+constexpr auto  G_MIN_BPM_STR      = "20.0";
+constexpr float G_MAX_BPM          = 999.0f;
+constexpr auto  G_MAX_BPM_STR      = "999.0";
+constexpr int   G_MAX_BEATS        = 32;
+constexpr int   G_MAX_BARS         = 32;
+constexpr int   G_MAX_QUANTIZE     = 8;
+constexpr float G_MIN_DB_SCALE     = 60.0f;
+constexpr int   G_MIN_COLUMN_WIDTH = 140;
+constexpr float G_MAX_BOOST_DB     = 20.0f;
+constexpr float G_MIN_PITCH        = 0.1f;
+constexpr float G_MAX_PITCH        = 4.0f;
+constexpr int   G_MAX_GRID_VAL     = 64;
+constexpr int   G_MIN_BUF_SIZE     = 8;
+constexpr int   G_MAX_BUF_SIZE     = 4096;
+constexpr int   G_MIN_GUI_WIDTH    = 816;
+constexpr int   G_MIN_GUI_HEIGHT   = 510;
+constexpr int   G_MAX_IO_CHANS     = 2;
+constexpr int   G_MAX_VELOCITY     = 0x7F;
+constexpr int   G_MAX_MIDI_CHANS   = 16;
+constexpr int   G_MAX_POLYPHONY    = 32;
 
 
 
